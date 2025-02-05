@@ -12,6 +12,8 @@ import TableRow from '@mui/material/TableRow';
 import { Iconify } from 'src/components/iconify';
 import { Label } from 'src/components/label';
 
+import { IBank } from 'src/interfaces/IBanks';
+
 // ----------------------------------------------------------------------
 
 export type BankProps = {
@@ -24,9 +26,21 @@ type BankTableRowProps = {
   row: BankProps;
   selected: boolean;
   onSelectRow: () => void;
+  onDelete: (id: number) => void;
+  onDesactivate: (id: number) => void;
+  onReinstate: (id: number) => void;
+  onEdit: (bank : IBank) => void;
 };
 
-export function BankTableRow({ row, selected, onSelectRow }: BankTableRowProps) {
+export function BankTableRow({
+  row,
+  selected,
+  onSelectRow,
+  onDelete,
+  onDesactivate,
+  onReinstate,
+  onEdit,
+}: BankTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -88,18 +102,23 @@ export function BankTableRow({ row, selected, onSelectRow }: BankTableRowProps) 
         >
           {row.status ? (
           <>
-          <MenuItem onClick={handleClosePopover}>
+          <MenuItem onClick={() => onEdit(row)}>
             <Iconify icon="solar:pen-bold" />
             Editar
           </MenuItem>
 
-          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={() => onDelete(row.id)} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
             Eliminar
           </MenuItem>
+
+          <MenuItem onClick={() => onDesactivate(row.id)} sx={{ color: 'warning.main' }}>
+            <Iconify icon="eva:eye-off-fill"/>
+            Desactivar
+          </MenuItem>
           </>
           ) : (
-            <MenuItem sx={{color: '#2196F3'}}>
+            <MenuItem onClick={() => onReinstate(row.id)}sx={{color: 'success.main'}}>
               <Iconify icon="mdi:bank-transfer-in" />
               Reingresar
             </MenuItem>

@@ -1,25 +1,21 @@
-import type { Theme, SxProps, Breakpoint } from '@mui/material/styles';
+import type { Breakpoint, SxProps, Theme } from '@mui/material/styles';
 
 import { useEffect } from 'react';
 
 import Box from '@mui/material/Box';
-import ListItem from '@mui/material/ListItem';
-import { useTheme } from '@mui/material/styles';
-import ListItemButton from '@mui/material/ListItemButton';
 import Drawer, { drawerClasses } from '@mui/material/Drawer';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import { useTheme } from '@mui/material/styles';
 
-import { usePathname } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
+import { usePathname } from 'src/routes/hooks';
 
 import { varAlpha } from 'src/theme/styles';
 
 import { Logo } from 'src/components/logo';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { NavUpgrade } from '../components/nav-upgrade';
-import { WorkspacesPopover } from '../components/workspaces-popover';
-
-import type { WorkspacesPopoverProps } from '../components/workspaces-popover';
 
 // ----------------------------------------------------------------------
 
@@ -34,7 +30,6 @@ export type NavContentProps = {
     topArea?: React.ReactNode;
     bottomArea?: React.ReactNode;
   };
-  workspaces: WorkspacesPopoverProps['data'];
   sx?: SxProps<Theme>;
 };
 
@@ -42,7 +37,6 @@ export function NavDesktop({
   sx,
   data,
   slots,
-  workspaces,
   layoutQuery,
 }: NavContentProps & { layoutQuery: Breakpoint }) {
   const theme = useTheme();
@@ -68,7 +62,7 @@ export function NavDesktop({
         ...sx,
       }}
     >
-      <NavContent data={data} slots={slots} workspaces={workspaces} />
+      <NavContent data={data} slots={slots}/>
     </Box>
   );
 }
@@ -80,8 +74,7 @@ export function NavMobile({
   data,
   open,
   slots,
-  onClose,
-  workspaces,
+  onClose
 }: NavContentProps & { open: boolean; onClose: () => void }) {
   const pathname = usePathname();
 
@@ -107,14 +100,14 @@ export function NavMobile({
         },
       }}
     >
-      <NavContent data={data} slots={slots} workspaces={workspaces} />
+      <NavContent data={data} slots={slots} />
     </Drawer>
   );
 }
 
 // ----------------------------------------------------------------------
 
-export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
+export function NavContent({ data, slots, sx }: NavContentProps) {
   const pathname = usePathname();
 
   return (
@@ -122,8 +115,6 @@ export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
       <Logo />
 
       {slots?.topArea}
-
-      <WorkspacesPopover data={workspaces} sx={{ my: 2 }} />
 
       <Scrollbar fillContent>
         <Box component="nav" display="flex" flex="1 1 auto" flexDirection="column" sx={sx}>
@@ -175,8 +166,6 @@ export function NavContent({ data, slots, workspaces, sx }: NavContentProps) {
       </Scrollbar>
 
       {slots?.bottomArea}
-
-      <NavUpgrade />
     </>
   );
 }

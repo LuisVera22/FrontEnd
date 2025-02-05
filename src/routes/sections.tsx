@@ -45,8 +45,15 @@ export function Router() {
       ),
       children: [
         { element: <HomePage />, index: true },
-        { path: 'user', element: <UserPage /> },
+        /* School project */
         { path: 'bank', element: <BankPage/>},
+        { path: 'payments', element: <BankPage/>},
+        { path: 'teachers', element: <BankPage/>},
+        { path: 'registrations', element: <BankPage/>},
+        { path: 'students', element: <BankPage/>},
+        { path: 'legalguardian', element: <BankPage/>},
+        /* others */
+        { path: 'user', element: <UserPage /> },
         { path: 'products', element: <ProductsPage /> },
         { path: 'blog', element: <BlogPage /> },
       ],
