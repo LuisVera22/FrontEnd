@@ -1,5 +1,6 @@
 import type { Breakpoint, SxProps, Theme } from '@mui/material/styles';
 
+import { useState } from 'react';
 
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -9,6 +10,8 @@ import { _langs } from 'src/_mock';
 
 import { Iconify } from 'src/components/iconify';
 
+import { MenuButton } from '../components/menu-button';
+
 import { layoutClasses } from '../classes';
 import { AccountPopover } from '../components/account-popover';
 import { LanguagePopover } from '../components/language-popover';
@@ -17,7 +20,7 @@ import { navData } from '../config-nav-dashboard';
 import { HeaderSection } from '../core/header-section';
 import { LayoutSection } from '../core/layout-section';
 import { Main } from './main';
-import { NavDesktop } from './nav';
+import { NavDesktop, NavMobile } from './nav';
 
 // ----------------------------------------------------------------------
 
@@ -31,6 +34,7 @@ export type DashboardLayoutProps = {
 
 export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) {
   const theme = useTheme();
+  const [navOpen, setNavOpen] = useState(false);
 
   const layoutQuery: Breakpoint = 'lg';
 
@@ -54,6 +58,22 @@ export function DashboardLayout({ sx, children, header }: DashboardLayoutProps) 
               <Alert severity="info" sx={{ display: 'none', borderRadius: 0 }}>
                 This is an info Alert.
               </Alert>
+            ),
+            leftArea: (
+              <>
+                <MenuButton
+                  onClick={() => setNavOpen(true)}
+                  sx={{
+                    ml: -1,
+                    [theme.breakpoints.up(layoutQuery)]: { display: 'none' },
+                  }}
+                />
+                <NavMobile
+                  data={navData}
+                  open={navOpen}
+                  onClose={() => setNavOpen(false)}
+                />
+              </>
             ),
             rightArea: (
               <Box gap={1} display="flex" alignItems="center">

@@ -1,22 +1,29 @@
 import type { IconButtonProps } from '@mui/material/IconButton';
 
-import { useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
+import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
-import Popover from '@mui/material/Popover';
 import Divider from '@mui/material/Divider';
-import MenuList from '@mui/material/MenuList';
-import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import Popover from '@mui/material/Popover';
+import Typography from '@mui/material/Typography';
 
-import { useRouter, usePathname } from 'src/routes/hooks';
+import { usePathname, useRouter } from 'src/routes/hooks';
 
 import { _myAccount } from 'src/_mock';
 
 // ----------------------------------------------------------------------
+
+const logout = () => {
+  localStorage.removeItem('token');
+  
+  window.location.href = '/sign-in';
+};
+
 
 export type AccountPopoverProps = IconButtonProps & {
   data?: {
@@ -49,6 +56,10 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
     },
     [handleClosePopover, router]
   );
+
+  const givenName = localStorage.getItem('givenName');
+  const surname = localStorage.getItem('surname');
+  const emailAddress = localStorage.getItem('emailAddress');
 
   return (
     <>
@@ -83,11 +94,11 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
       >
         <Box sx={{ p: 2, pb: 1.5 }}>
           <Typography variant="subtitle2" noWrap>
-            {_myAccount?.displayName}
+            {givenName} {surname}
           </Typography>
 
           <Typography variant="body2" sx={{ color: 'text.secondary' }} noWrap>
-            {_myAccount?.email}
+            {emailAddress}
           </Typography>
         </Box>
 
@@ -129,7 +140,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <Box sx={{ p: 1 }}>
-          <Button fullWidth color="error" size="medium" variant="text">
+          <Button fullWidth color="error" size="medium" variant="text" onClick={logout}>
             Logout
           </Button>
         </Box>

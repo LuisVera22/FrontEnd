@@ -7,6 +7,8 @@ const icon = (name: string) => (
   <SvgColor width="100%" height="100%" src={`/assets/icons/navbar/${name}.svg`} />
 );
 
+const role = localStorage.getItem('userRole');
+
 export const navData = [
   {
     title: 'Dashboard',
@@ -47,7 +49,7 @@ export const navData = [
     title: 'Apoderados',
     path: '/legalguardiands',
     icon: icon('ic-legalGuardian'),
-  },
+  } /* ,
   {
     title: 'Sign in',
     path: '/sign-in',
@@ -57,5 +59,5 @@ export const navData = [
     title: 'Not found',
     path: '/404',
     icon: icon('ic-disabled'),
-  },
+  }, */
 ];

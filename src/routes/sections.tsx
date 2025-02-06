@@ -1,8 +1,11 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Navigate, Outlet, useRoutes } from 'react-router-dom';
+
 
 import Box from '@mui/material/Box';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
+
+import ProtectedRoute from 'src/routes/components/ProtectedRoute';
 
 import { AuthLayout } from 'src/layouts/auth';
 import { DashboardLayout } from 'src/layouts/dashboard';
@@ -33,7 +36,27 @@ const renderFallback = (
   </Box>
 );
 
+
 export function Router() {
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [role, setRole] = useState('');
+
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      if(token) {
+        // Decodificar el token JWT para extraer el rol
+        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        setRole(decodedToken?.role);
+      }
+      setIsAuthenticated(!!token);
+    };
+
+    checkAuth();
+  }, []);
+
+
   return useRoutes([
     {
       element: (
@@ -44,11 +67,37 @@ export function Router() {
         </DashboardLayout>
       ),
       children: [
-        { element: <HomePage />, index: true },
+        // Ruta raíz `/` es la del Dashboard y es protegida
+        {
+          path: '/',
+          element: isAuthenticated ? <ProtectedRoute><Navigate to="/" replace /></ProtectedRoute> : <Navigate to="/sign-in" replace />,
+        },
+        {
+          element: 
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>,
+          index: true 
+        },
         /* School project */
-        { path: 'bank', element: <BankPage/>},
-        { path: 'payments', element: <BankPage/>},
-        { path: 'teachers', element: <BankPage/>},
+        { path: 'bank',
+          element: 
+            <ProtectedRoute>
+              <BankPage/>
+            </ProtectedRoute>
+        },
+        { 
+          path: 'payments', 
+          element: <BankPage/>
+        },
+        { 
+          path: 'teachers', 
+          element: (
+            <ProtectedRoute allowedRoles={['Administrador']}>
+              <BankPage />
+            </ProtectedRoute>
+          ),
+        },
         { path: 'registrations', element: <BankPage/>},
         { path: 'students', element: <BankPage/>},
         { path: 'legalguardian', element: <BankPage/>},

@@ -51,6 +51,8 @@ export function BankTableRow({
     setOpenPopover(null);
   }, []);
 
+  const userRole = localStorage.getItem('userRole');
+
   return (
     <>
       <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
@@ -69,15 +71,17 @@ export function BankTableRow({
             {row.status ? 'Activo' : 'Inactivo'}
           </Label>
         </TableCell>
-
-        <TableCell align="right">
-          <IconButton onClick={handleOpenPopover}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
-        </TableCell>
+        {userRole === 'Administrador' && (
+          <TableCell align="right">
+            <IconButton onClick={handleOpenPopover}>
+              <Iconify icon="eva:more-vertical-fill" />
+            </IconButton>
+          </TableCell>
+        )}
       </TableRow>
-
-      <Popover
+      
+      {userRole === 'Administrador' && (
+        <Popover
         open={!!openPopover}
         anchorEl={openPopover}
         onClose={handleClosePopover}
@@ -122,10 +126,10 @@ export function BankTableRow({
               <Iconify icon="mdi:bank-transfer-in" />
               Reingresar
             </MenuItem>
-          )
-          }
+          )}
         </MenuList>
       </Popover>
+      )}
     </>
   );
 }

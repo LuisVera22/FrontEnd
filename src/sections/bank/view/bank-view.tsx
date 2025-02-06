@@ -37,6 +37,7 @@ import { applyFilter, emptyRows, getComparator } from 'src/sections/bank/utils';
 import type { BankProps } from 'src/sections/bank/bank-table-row';
 
 // ----------------------------------------------------------------------
+const token = localStorage.getItem('token');
 
 export function BankView() {
 const [banks, setBanks] = useState<IBank[]>([]);
@@ -47,10 +48,21 @@ const [bankToDelete, setBankToDelete] = useState<number | null>(null);
 const [openEdit, setOpenEdit] = useState(false);
 const [bankToEdit, setBankToEdit] = useState<number | null>(null);
 
+
 // Obtener Bancos
 const _banks = async () => {
+  if (!token){
+    console.error('No se encontró el token de autenticación');
+      return;
+  } 
   try {
-    const response = await fetch(`${appsettings.apiUrl}Bank`, { method: 'GET' });
+    const response = await fetch(`${appsettings.apiUrl}Bank`, { 
+      method: 'GET',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
     if (response.ok) {
       const data = await response.json();
       setBanks(data);
@@ -73,7 +85,9 @@ const handleSave = async () => {
   try {
     const response = await fetch(`${appsettings.apiUrl}Bank`, { 
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`},
       body: JSON.stringify({ bankName: _bankName }),
     });
     if (response.ok) {
@@ -111,7 +125,9 @@ const confirmDelete = async () => {
   try {
     const response = await fetch(`${appsettings.apiUrl}Bank/(id)?id=${bankToDelete}`, {
       method: 'DELETE',
-      headers: { 'Accept': '*/*' },
+      headers: { 
+        'Accept': '*/*',
+        'Authorization': `Bearer ${token}`},
     });
     if (response.ok) {
       _banks();
@@ -141,6 +157,7 @@ const handleDesactivate = async (id: number) => {
       method: 'PUT',
       headers: {
         'Accept': '*/*',
+        'Authorization': `Bearer ${token}`,
       },
     });
     if (response.ok) {
@@ -163,6 +180,7 @@ const handleReinstate = async (id: number) => {
       method: 'PUT',
       headers: {
         'Accept': '*/*',
+        'Authorization': `Bearer ${token}`,
       },
     });
     if (response.ok) {
@@ -192,7 +210,9 @@ const handleSaveEdit = async () => {
   try {
     const response = await fetch(`${appsettings.apiUrl}Bank/${bankToEdit}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`},
       body: JSON.stringify({ bankName: _bankName }),  
     });
     if (response.ok) {
@@ -229,6 +249,8 @@ const handleSaveEdit = async () => {
   });
 
   const notFound = !dataFiltered.length && !!filterName;
+  
+  const userRole = localStorage.getItem('userRole');
 
   return (
     <DashboardContent>
@@ -236,14 +258,16 @@ const handleSaveEdit = async () => {
         <Typography variant="h4" flexGrow={1}>
           Bancos
         </Typography>
-        <Button
-          variant="contained"
-          color="inherit"
-          startIcon={<Iconify icon="mingcute:add-line" />}
-          onClick={handleOpen}
-        >
-          Agregar Banco
-        </Button>
+        {userRole === 'Administrador' && (
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Iconify icon="mingcute:add-line" />}
+            onClick={handleOpen}
+          >
+            Agregar Banco
+          </Button>
+        )}
       </Box>
 
       <Card>
@@ -256,7 +280,7 @@ const handleSaveEdit = async () => {
           }}
         />
 
-<Modal open={open} onClose={handleClose}>
+      <Modal open={open} onClose={handleClose}>
         <Box
           sx={{
             position: 'absolute',
@@ -309,7 +333,7 @@ const handleSaveEdit = async () => {
                 headLabel={[
                   { id: 'name', label: 'Nombre' },
                   { id: 'status', label: 'Estado' },
-                  { id: '' },
+                  ...(userRole === 'Administrador' ? [{ id: '', label: '' }] : []),
                 ]}
               />
               <TableBody>
@@ -350,6 +374,8 @@ const handleSaveEdit = async () => {
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
           onRowsPerPageChange={table.onChangeRowsPerPage}
+          labelRowsPerPage="Filas por página"
+          labelDisplayedRows={({ from, to, count }) => `Página ${from}-${to} de ${count}`}
         />
       </Card>
 

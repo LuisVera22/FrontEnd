@@ -1,26 +1,28 @@
-import Grid from '@mui/material/Unstable_Grid2';
 import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Unstable_Grid2';
 
-import { _tasks, _posts, _timeline } from 'src/_mock';
+import { _posts, _tasks, _timeline } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
 
-import { AnalyticsNews } from '../analytics-news';
-import { AnalyticsTasks } from '../analytics-tasks';
+import { AnalyticsConversionRates } from '../analytics-conversion-rates';
+import { AnalyticsCurrentSubject } from '../analytics-current-subject';
 import { AnalyticsCurrentVisits } from '../analytics-current-visits';
+import { AnalyticsNews } from '../analytics-news';
 import { AnalyticsOrderTimeline } from '../analytics-order-timeline';
+import { AnalyticsTasks } from '../analytics-tasks';
+import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
 import { AnalyticsWebsiteVisits } from '../analytics-website-visits';
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
-import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
-import { AnalyticsCurrentSubject } from '../analytics-current-subject';
-import { AnalyticsConversionRates } from '../analytics-conversion-rates';
 
 // ----------------------------------------------------------------------
+
+const givenName = localStorage.getItem('givenName');
 
 export function OverviewAnalyticsView() {
   return (
     <DashboardContent maxWidth="xl">
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>
-        Hi, Welcome back 👋
+        Hola {givenName}, Bienvenido nuevamente 👋
       </Typography>
 
       <Grid container spacing={3}>
