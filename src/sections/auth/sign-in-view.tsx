@@ -54,8 +54,17 @@ export function SignInView() {
     const token = await loginRequest(username, password);
 
     if (token) {
-      // Guardamos el token en localStorage (o sessionStorage)
+      // Guardamos el token en localStorage
       localStorage.setItem('token', token);
+
+      // Guardamos el tiempo como una cadena
+      localStorage.setItem('token_time', Date.now().toString());
+
+      // Establecemos un temporizador de 15 minutos (900,000 ms)
+      setTimeout(() => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('token_time');
+      }, 900000);
 
       // Decodificamos el token JWT para obtener los roles y datos
       const decodedToken = JSON.parse(atob(token.split('.')[1]));

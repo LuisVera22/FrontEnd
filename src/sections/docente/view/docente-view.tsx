@@ -25,39 +25,38 @@ import { DashboardContent } from 'src/layouts/dashboard';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { IBank } from 'src/interfaces/IBanks';
 
-import { BankTableHead } from 'src/sections/bank/bank-table-head';
-import { BankTableRow } from 'src/sections/bank/bank-table-row';
-import { BankTableToolbar } from 'src/sections/bank/bank-table-toolbar';
-import { TableEmptyRows } from 'src/sections/bank/table-empty-rows';
-import { TableNoData } from 'src/sections/bank/table-no-data';
-import { applyFilter, emptyRows, getComparator } from 'src/sections/bank/utils';
+import { IDocente } from 'src/interfaces/IDocente';
+import { DocenteTableHead } from 'src/sections/docente/DocenteTableHead';
+import { DocenteTableRow } from 'src/sections/docente/DocenteTableRow';
+import { DocenteTableToolbar } from 'src/sections/docente/DocenteTableToolbar';
+import { TableEmptyRows } from 'src/sections/docente/table-empty-rows';
+import { TableNoData } from 'src/sections/docente/table-no-data';
+import { applyFilter, emptyRows, getComparator } from 'src/sections/docente/utils';
 
-import type { BankProps } from 'src/sections/bank/bank-table-row';
+import type { DocenteProps } from 'src/sections/docente/DocenteTableRow';
 
 // ----------------------------------------------------------------------
+
 const token = localStorage.getItem('token');
 
-export function BankView() {
-const [banks, setBanks] = useState<IBank[]>([]);
+export function DocenteView() {
+const [docentes, setDocentes] = useState<IDocente[]>([]);
 const [openDialog, setOpenDialog] = useState(false);
 const [open, setOpen] = useState(false);
-const [_bankName, setBankName] = useState('');
-const [bankToDelete, setBankToDelete] = useState<number | null>(null);
+const [_docenteName, setDocenteName] = useState('');
+const [_docenteApellido, setDocenteApellido] = useState('');
+const [_docenteDni, setDocenteDni] = useState('');
+const [_docenteEspecialidad, setDocenteEspecialidad] = useState('');
+const [docenteToDelete, setDocenteToDelete] = useState<number | null>(null);
 const [openEdit, setOpenEdit] = useState(false);
-const [bankToEdit, setBankToEdit] = useState<number | null>(null);
-
+const [docenteToEdit, setDocenteToEdit] = useState<number | null>(null);
 
 // Obtener Bancos
-const _banks = async () => {
-  if (!token){
-    console.error('No se encontró el token de autenticación');
-      return;
-  } 
+const _docentes = async () => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Bank`, { 
-      method: 'GET',
+    const response = await fetch(`${appsettings.apiUrl}Docente`, { 
+      method: 'GET', 
       headers: { 
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
@@ -65,7 +64,7 @@ const _banks = async () => {
     });
     if (response.ok) {
       const data = await response.json();
-      setBanks(data);
+      setDocentes(data);
     } else {
       console.error('Error al obtener los bancos:', response.status);
     }
@@ -75,34 +74,38 @@ const _banks = async () => {
 };
 
 useEffect(() => {
-  _banks();
+  _docentes();
 }, []);
 
-// Registro de Bancos
+// Registro de Docentes
 const handleOpen = () => setOpen(true);
 const handleClose = () => setOpen(false);
 const handleSave = async () => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Bank`, { 
+    const response = await fetch(`${appsettings.apiUrl}Docente`, { 
       method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`},
-      body: JSON.stringify({ bankName: _bankName }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: _docenteName,
+        apellido: _docenteApellido,
+        dni: _docenteDni,
+        especialidad: _docenteEspecialidad
+      }),
     });
     if (response.ok) {
-      _banks();
+      _docentes();
       setOpen(false);
-      setBankName('');
-      toast.success('Banco registrado exitosamente', { autoClose: 3000, position: "top-right" });
+      setDocenteName('');
+      setDocenteApellido('');
+      setDocenteDni('');
+      setDocenteEspecialidad('');
+      toast.success('Docente registrado exitosamente', { autoClose: 3000, position: "top-right" });
     } else {
-      console.error('Error al guardar el banco:', response.status);
-      setBankName('');
-      toast.error('Error al registrar el banco', { autoClose: 3000, position: "top-right" });
+      console.error('Error al guardar el docente:', response.status);
+      toast.error('Error al registrar el docente', { autoClose: 3000, position: "top-right" });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
-    setBankName('');
     toast.error('Error en la petición', { autoClose: 3000, position: "top-right" });
   }
 };
@@ -110,27 +113,25 @@ const handleCancel = () => {
   setOpen(false);
   setOpenDialog(false);
   setOpenEdit(false);
-  setBankToDelete(null);
-  setBankName('');
+  setDocenteToDelete(null);
+  setDocenteName('');
   toast.info('Operación cancelada', { autoClose: 3000, position: "top-right" });
 };
 
-// Eliminar Bancos
+// Eliminar Docentes
 const handleDelete = async (id: number) => {
-  setBankToDelete(id);
+  setDocenteToDelete(id);
   setOpenDialog(true);
 };
 
 const confirmDelete = async () => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Bank/(id)?id=${bankToDelete}`, {
+    const response = await fetch(`${appsettings.apiUrl}Docente/(id)?id=${docenteToDelete}`, {
       method: 'DELETE',
-      headers: { 
-        'Accept': '*/*',
-        'Authorization': `Bearer ${token}`},
+      headers: { 'Accept': '*/*' },
     });
     if (response.ok) {
-      _banks();
+      _docentes();
       setOpenDialog(false);
       toast.success('Banco eliminado exitosamente', { autoClose: 3000, position: "top-right" });
     } else {
@@ -147,25 +148,24 @@ const confirmDelete = async () => {
 
 const handleCloseDialog = () => {
   setOpenDialog(false);
-  setBankToDelete(null);
+  setDocenteToDelete(null);
 };
 
-// Desactivar Bancos
+// Desactivar Docentes
 const handleDesactivate = async (id: number) => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Bank/desactivate/${id}`, {
+    const response = await fetch(`${appsettings.apiUrl}Docente/desactivate/${id}`, {
       method: 'PUT',
       headers: {
         'Accept': '*/*',
-        'Authorization': `Bearer ${token}`,
       },
     });
     if (response.ok) {
-      _banks();
-      toast.success('Banco desactivado exitosamente', {autoClose: 3000,position: "top-right",});
+      _docentes();
+      toast.success('Docente desactivado exitosamente', {autoClose: 3000,position: "top-right",});
     } else {
-      console.error('Error al desactivar el banco:', response.status);
-      toast.error('Error al desactivar el banco', { autoClose: 3000, position: "top-right" });
+      console.error('Error al desactivar el Docente:', response.status);
+      toast.error('Error al desactivar el Docente', { autoClose: 3000, position: "top-right" });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
@@ -176,19 +176,18 @@ const handleDesactivate = async (id: number) => {
 // Reactivar Bancos
 const handleReinstate = async (id: number) => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Bank/reinstate/${id}`, {
+    const response = await fetch(`${appsettings.apiUrl}Docente/reinstate/${id}`, {
       method: 'PUT',
       headers: {
         'Accept': '*/*',
-        'Authorization': `Bearer ${token}`,
       },
     });
     if (response.ok) {
-      _banks();
-      toast.success('Banco reingresado exitosamente', {autoClose: 3000,position: "top-right",});
+      _docentes();
+      toast.success('Docente reingresado exitosamente', {autoClose: 3000,position: "top-right",});
     } else {
-      console.error('Error al reingresar el banco:', response.status);
-      toast.error('Error al reingresar el banco', { autoClose: 3000, position: "top-right" });
+      console.error('Error al reingresar el Docente:', response.status);
+      toast.error('Error al reingresar el Docente', { autoClose: 3000, position: "top-right" });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
@@ -197,43 +196,50 @@ const handleReinstate = async (id: number) => {
 };
 
 // Función para editar un banco
-const handleEdit = (bank: IBank) => {
-  setBankName(bank.bankName);
-  setBankToEdit(bank.id);
-  setOpenEdit(true); 
+const handleEdit = (docente: IDocente) => {
+  setDocenteName(docente.nombre);
+  setDocenteApellido(docente.apellido); // Asignar apellido
+  setDocenteDni(docente.dni); // Asignar DNI
+  setDocenteEspecialidad(docente.especialidad); // Asignar especialidad
+  setDocenteToEdit(docente.id);
+  setOpenEdit(true);
 };
 
 // Función para guardar la edición
 const handleSaveEdit = async () => {
-  if (!bankToEdit) return;
+  if (!docenteToEdit) return;
 
   try {
-    const response = await fetch(`${appsettings.apiUrl}Bank/${bankToEdit}`, {
+    const response = await fetch(`${appsettings.apiUrl}Docente/${docenteToEdit}`, {
       method: 'PUT',
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`},
-      body: JSON.stringify({ bankName: _bankName }),  
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: _docenteName,
+        apellido: _docenteApellido,
+        dni: _docenteDni,
+        especialidad: _docenteEspecialidad
+      }),
     });
     if (response.ok) {
-      _banks();  
-      setOpenEdit(false); 
-      setBankName('');
-      toast.success('Banco actualizado exitosamente', {
+      _docentes();
+      setOpenEdit(false);
+      setDocenteName('');
+      setDocenteApellido('');
+      setDocenteDni('');
+      setDocenteEspecialidad('');
+      toast.success('Docente actualizado exitosamente', {
         autoClose: 3000,
         position: "top-right",
       });
     } else {
-      console.error('Error al editar el banco:', response.status);
-      setBankName('');
-      toast.error('Error al editar el banco', {
+      console.error('Error al editar el docente:', response.status);
+      toast.error('Error al editar el docente', {
         autoClose: 3000,
         position: "top-right",
       });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
-    setBankName('');
     toast.error('Error en la petición', { autoClose: 3000, position: "top-right" });
   }
 };
@@ -242,36 +248,32 @@ const handleSaveEdit = async () => {
 
   const [filterName, setFilterName] = useState('');
 
-  const dataFiltered: BankProps[] = applyFilter({
-    inputData: banks,
+  const dataFiltered: DocenteProps[] = applyFilter({
+    inputData: docentes,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
 
   const notFound = !dataFiltered.length && !!filterName;
-  
-  const userRole = localStorage.getItem('userRole');
 
   return (
     <DashboardContent>
       <Box display="flex" alignItems="center" mb={5}>
         <Typography variant="h4" flexGrow={1}>
-          Bancos
+          Docentes
         </Typography>
-        {userRole === 'Administrador' && (
-          <Button
-            variant="contained"
-            color="inherit"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            onClick={handleOpen}
-          >
-            Agregar Banco
-          </Button>
-        )}
+        <Button
+          variant="contained"
+          color="inherit"
+          startIcon={<Iconify icon="mingcute:add-line" />}
+          onClick={handleOpen}
+        >
+          Agregar Docente
+        </Button>
       </Box>
 
       <Card>
-        <BankTableToolbar
+        <DocenteTableToolbar
           numSelected={table.selected.length}
           filterName={filterName}
           onFilterName={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -280,60 +282,85 @@ const handleSaveEdit = async () => {
           }}
         />
 
-      <Modal open={open} onClose={handleClose}>
-        <Box
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: 400,
-            bgcolor: 'background.paper',
-            boxShadow: 24,
-            p: 4,
-          }}
-        >
-          <Typography variant="h6" component="h2" mb={2}>
-            Registrar Banco
-          </Typography>
-          <TextField
-            fullWidth
-            label="Nombre del Banco"
-            value={_bankName}
-            onChange={(e) => setBankName(e.target.value)}
-            variant="outlined"
-            margin="normal"
-          />
-          <Box mt={2} display="flex" justifyContent="flex-end">
-            <Button onClick={handleCancel} sx={{ mr: 2 }}>
-              Cancelar
-            </Button>
-            <Button variant="contained" onClick={handleSave}>
-              Guardar
-            </Button>
-          </Box>
-        </Box>
-      </Modal>
-
+<Modal open={open} onClose={handleClose}>
+  <Box
+    sx={{
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 400,
+      bgcolor: 'background.paper',
+      boxShadow: 24,
+      p: 4,
+    }}
+  >
+    <Typography variant="h6" component="h2" mb={2}>
+      Registrar Docente
+    </Typography>
+    <TextField
+      fullWidth
+      label="Nombre del Docente"
+      value={_docenteName}
+      onChange={(e) => setDocenteName(e.target.value)}
+      variant="outlined"
+      margin="normal"
+    />
+    <TextField
+      fullWidth
+      label="Apellido del Docente"
+      value={_docenteApellido}
+      onChange={(e) => setDocenteApellido(e.target.value)}
+      variant="outlined"
+      margin="normal"
+    />
+    <TextField
+      fullWidth
+      label="DNI del Docente"
+      value={_docenteDni}
+      onChange={(e) => setDocenteDni(e.target.value)}
+      variant="outlined"
+      margin="normal"
+    />
+    <TextField
+      fullWidth
+      label="Especialidad del Docente"
+      value={_docenteEspecialidad}
+      onChange={(e) => setDocenteEspecialidad(e.target.value)}
+      variant="outlined"
+      margin="normal"
+    />
+    <Box mt={2} display="flex" justifyContent="flex-end">
+      <Button onClick={handleCancel} sx={{ mr: 2 }}>
+        Cancelar
+      </Button>
+      <Button variant="contained" onClick={handleSave}>
+        Guardar
+      </Button>
+    </Box>
+  </Box>
+</Modal>
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 800 }}>
-              <BankTableHead
+              <DocenteTableHead
                 order={table.order}
                 orderBy={table.orderBy}
-                rowCount={banks.length}
+                rowCount={docentes.length}
                 numSelected={table.selected.length}
                 onSort={table.onSort}
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    banks.map((bank) => String(bank.id))
+                    docentes.map((docente) => String(docente.id))
                   )
                 }
                 headLabel={[
-                  { id: 'bankName', label: 'Nombre' },
-                  { id: 'status', label: 'Estado' },
-                  ...(userRole === 'Administrador' ? [{ id: '', label: '' }] : []),
+                  { id: 'name', label: 'Nombre' },
+                  { id: 'apellido', label: 'Apellido' },
+                  { id: 'dni', label: 'DNI' },
+                  { id: 'especialidad', label: 'Especialidad' },
+                  { id: 'estado', label: 'Estado' },
                 ]}
               />
               <TableBody>
@@ -343,7 +370,7 @@ const handleSaveEdit = async () => {
                     table.page * table.rowsPerPage + table.rowsPerPage
                   )
                   .map((row) => (
-                    <BankTableRow
+                    <DocenteTableRow
                       key={row.id}
                       row={row}
                       selected={table.selected.includes(String(row.id))}
@@ -357,7 +384,7 @@ const handleSaveEdit = async () => {
 
                 <TableEmptyRows
                   height={68}
-                  emptyRows={emptyRows(table.page, table.rowsPerPage, banks.length)}
+                  emptyRows={emptyRows(table.page, table.rowsPerPage, docentes.length)}
                 />
 
                 {notFound && <TableNoData searchQuery={filterName} />}
@@ -369,13 +396,11 @@ const handleSaveEdit = async () => {
         <TablePagination
           component="div"
           page={table.page}
-          count={banks.length}
+          count={docentes.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
           onRowsPerPageChange={table.onChangeRowsPerPage}
-          labelRowsPerPage="Registros por página"
-          labelDisplayedRows={({ from, to, count }) => `Página ${from}-${to} de ${count}`}
         />
       </Card>
 
@@ -383,7 +408,7 @@ const handleSaveEdit = async () => {
         <DialogTitle>Confirmación de Eliminación</DialogTitle>
         <DialogContent>
           <Typography>
-            ¿Estás seguro de que deseas eliminar este banco?
+            ¿Estás seguro de que deseas eliminar este Docente?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -410,13 +435,37 @@ const handleSaveEdit = async () => {
           }}
         >
           <Typography variant="h6" component="h2" mb={2}>
-            Editar Banco
+            Editar Docente
           </Typography>
           <TextField
             fullWidth
-            label="Nombre del Banco"
-            value={_bankName}
-            onChange={(e) => setBankName(e.target.value)}
+            label="Nombre del Docente"
+            value={_docenteName}
+            onChange={(e) => setDocenteName(e.target.value)}
+            variant="outlined"
+            margin="normal"
+          />
+           <TextField
+            fullWidth
+            label="Apellido del Docente"
+            value={_docenteApellido}
+            onChange={(e) => setDocenteApellido(e.target.value)}
+            variant="outlined"
+            margin="normal"
+          />
+           <TextField
+            fullWidth
+            label="Dni del Docente"
+            value={_docenteDni}
+            onChange={(e) => setDocenteDni(e.target.value)}
+            variant="outlined"
+            margin="normal"
+          />
+           <TextField
+            fullWidth
+            label="Especialidad del Docente"
+            value={_docenteEspecialidad}
+            onChange={(e) => setDocenteEspecialidad(e.target.value)}
             variant="outlined"
             margin="normal"
           />
@@ -440,7 +489,7 @@ const handleSaveEdit = async () => {
 
 export function useTable() {
   const [page, setPage] = useState(0);
-  const [orderBy, setOrderBy] = useState('bankName');
+  const [orderBy, setOrderBy] = useState('name');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState<string[]>([]);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');

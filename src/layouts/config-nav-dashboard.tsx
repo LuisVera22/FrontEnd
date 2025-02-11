@@ -27,7 +27,7 @@ export const navData = [
   },
   {
     title: 'Docentes',
-    path: '/teachers',
+    path: '/docentes',
     icon: icon('ic-teacher'),
   },
   {
@@ -47,7 +47,7 @@ export const navData = [
   },
   {
     title: 'Apoderados',
-    path: '/legalguardiands',
+    path: '/legalguardians',
     icon: icon('ic-legalGuardian'),
   } /* ,
   {

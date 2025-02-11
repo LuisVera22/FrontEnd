@@ -17,6 +17,9 @@ export const HomePage = lazy(() => import('src/pages/home'));
 export const BlogPage = lazy(() => import('src/pages/blog'));
 export const UserPage = lazy(() => import('src/pages/user'));
 export const BankPage = lazy(() => import('src/pages/bank'));
+export const DocentePage = lazy(() => import('src/pages/docente'));
+export const StudentPage = lazy(() => import('src/pages/student'));
+export const LegalGuardianPage = lazy(() => import('src/pages/legalGuardian'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const ProductsPage = lazy(() => import('src/pages/products'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
@@ -88,23 +91,37 @@ export function Router() {
         },
         { 
           path: 'payments', 
-          element: <BankPage/>
+          element: 
+            <ProtectedRoute>
+              <BankPage/>
+            </ProtectedRoute>
         },
         { 
-          path: 'teachers', 
+          path: 'docentes', 
           element: (
-            <ProtectedRoute allowedRoles={['Administrador']}>
-              <BankPage />
+            <ProtectedRoute>
+              <DocentePage />
             </ProtectedRoute>
           ),
         },
-        { path: 'registrations', element: <BankPage/>},
-        { path: 'students', element: <BankPage/>},
-        { path: 'legalguardian', element: <BankPage/>},
-        /* others */
-        { path: 'user', element: <UserPage /> },
-        { path: 'products', element: <ProductsPage /> },
-        { path: 'blog', element: <BlogPage /> },
+        { path: 'registrations',
+          element: 
+            <ProtectedRoute>
+              <BankPage/>
+            </ProtectedRoute>
+        },
+        { path: 'students',
+          element: 
+            <ProtectedRoute>
+              <StudentPage/>
+            </ProtectedRoute>
+        },
+        { path: 'legalguardians',
+          element:
+            <ProtectedRoute>
+              <LegalGuardianPage/>
+            </ProtectedRoute>
+        },
       ],
     },
     {

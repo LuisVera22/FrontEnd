@@ -9,13 +9,13 @@ import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
 
-type BankTableToolbarProps = {
+type StudentTableToolbarProps = {
   numSelected: number;
   filterName: string;
   onFilterName: (event: React.ChangeEvent<HTMLInputElement>) => void;
 };
 
-export function BankTableToolbar({ numSelected, filterName, onFilterName }: BankTableToolbarProps) {
+export function StudentTableToolbar({ numSelected, filterName, onFilterName }: StudentTableToolbarProps) {
   return (
     <Toolbar
       sx={{
@@ -38,7 +38,7 @@ export function BankTableToolbar({ numSelected, filterName, onFilterName }: Bank
           fullWidth
           value={filterName}
           onChange={onFilterName}
-          placeholder="Buscar banco..."
+          placeholder="Buscar estudiante..."
           startAdornment={
             <InputAdornment position="start">
               <Iconify width={20} icon="eva:search-fill" sx={{ color: 'text.disabled' }} />
