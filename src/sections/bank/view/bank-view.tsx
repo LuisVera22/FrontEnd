@@ -248,7 +248,7 @@ const handleSaveEdit = async () => {
     filterName,
   });
 
-  const notFound = !dataFiltered.length && !!filterName;
+  const notFound = !dataFiltered.length;
   
   const userRole = localStorage.getItem('userRole');
 

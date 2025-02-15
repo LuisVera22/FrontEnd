@@ -1,9 +1,11 @@
 import { useCallback, useState } from 'react';
 
 import LoadingButton from '@mui/lab/LoadingButton';
+import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
@@ -26,7 +28,7 @@ const loginRequest = async (username: string, password: string): Promise<any> =>
     });
 
     if (!response.ok) {
-      throw new Error('Login failed');
+      throw new Error('Error en el inicio de sesión.');
     }
 
     const token = await response.text();
@@ -46,51 +48,50 @@ export function SignInView() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
-  const handleSignIn = useCallback( async () => {
+  const handleSignIn = useCallback(async () => {
     setLoading(true);
+    setErrorMessage('');
 
-    // Llamamos a la API para autenticar
-    const token = await loginRequest(username, password);
+    try {
+      const token = await loginRequest(username, password);
 
-    if (token) {
-      // Guardamos el token en localStorage
-      localStorage.setItem('token', token);
+      if (token) {
+        localStorage.setItem('token', token);
+        localStorage.setItem('token_time', Date.now().toString());
 
-      // Guardamos el tiempo como una cadena
-      localStorage.setItem('token_time', Date.now().toString());
+        setTimeout(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('token_time');
+        }, 900000);
 
-      // Establecemos un temporizador de 15 minutos (900,000 ms)
-      setTimeout(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('token_time');
-      }, 900000);
+        const decodedToken = JSON.parse(atob(token.split('.')[1]));
 
-      // Decodificamos el token JWT para obtener los roles y datos
-      const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+        const givenName = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'];
+        const surname = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'];
+        const emailAddress = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
 
-      // Extraemos los valores del token usando las claves completas (URLs) que proporcionaste
-      const role = decodedToken['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
-      const givenName = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/givenname'];
-      const surname = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/surname'];
-      const emailAddress = decodedToken['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'];
+        localStorage.setItem('userRole', role);
+        localStorage.setItem('givenName', givenName);
+        localStorage.setItem('surname', surname);
+        localStorage.setItem('emailAddress', emailAddress);
 
-      // Guardamos el rol y los datos adicionales en localStorage
-      localStorage.setItem('userRole', role);
-      localStorage.setItem('givenName', givenName);
-      localStorage.setItem('surname', surname);
-      localStorage.setItem('emailAddress', emailAddress);
-
-      if (role === 'Administrador') {
-        navigate('/');
-      } else {
-        navigate('/bank');
+        if (role === 'Administrador') {
+          navigate('/');
+        } else {
+          navigate('/bank');
+        }
       }
-    } else {
-      alert('Login fallido. Intenta nuevamente');
+    } catch (error) {
+      console.error('Error durante el login', error);
+      setErrorMessage(error.message || 'Error en el inicio de sesión.');
+      setOpenSnackbar(true);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [username, password, navigate]);
 
   const renderForm = (
@@ -136,6 +137,18 @@ export function SignInView() {
       >
         Ingresar
       </LoadingButton>
+
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={() => setOpenSnackbar(false)} severity="error" sx={{ width: '100%' }}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
+
     </Box>
   );
 
@@ -146,6 +159,7 @@ export function SignInView() {
       </Box>
 
       {renderForm}
+      
     </>
   );
 }

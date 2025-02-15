@@ -3,6 +3,7 @@ export interface ILegalGuardian {
     identityDocument: string;
     name: string;
     lastName: string;
+    gender: string;
     birthdate: string;
     cellphoneNumber: string;
     email: string;

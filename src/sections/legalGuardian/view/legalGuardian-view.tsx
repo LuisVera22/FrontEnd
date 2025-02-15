@@ -44,7 +44,7 @@ export function LegalGuardianView() {
     filterName,
   });
 
-  const notFound = !dataFiltered.length && !!filterName;
+  const notFound = !dataFiltered.length;
 
   // Obtener Estudiantes
     const _legalGuardians = async () => {

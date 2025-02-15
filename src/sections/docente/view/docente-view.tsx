@@ -254,7 +254,7 @@ const handleSaveEdit = async () => {
     filterName,
   });
 
-  const notFound = !dataFiltered.length && !!filterName;
+  const notFound = !dataFiltered.length;
 
   return (
     <DashboardContent>

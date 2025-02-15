@@ -18,6 +18,7 @@ export type StudentProps = {
   code: string;
   name: string;
   lastName: string;
+  gender: string;
   direction: string;
   birthdate: string;
   legalGuardianId: number;
@@ -27,9 +28,15 @@ type StudentTableRowProps = {
   row: StudentProps;
   selected: boolean;
   onSelectRow: () => void;
+  assingLegalGuardian: (id: number) => void;
 };
 
-export function StudentTableRow({ row, selected, onSelectRow }: StudentTableRowProps) {
+export function StudentTableRow({ 
+  row,
+  selected,
+  onSelectRow,
+  assingLegalGuardian,
+}: StudentTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -96,13 +103,20 @@ export function StudentTableRow({ row, selected, onSelectRow }: StudentTableRowP
         >
           <MenuItem onClick={handleClosePopover}>
             <Iconify icon="solar:pen-bold" />
-            Edit
+            Editar
           </MenuItem>
 
           <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete
+            Eliminar
           </MenuItem>
+
+          {row.legalGuardianId ? (
+            <MenuItem onClick={() => assingLegalGuardian(row.id)} sx={{color: 'warning.main'}}>
+              <Iconify icon="mdi:account" />
+              Asignar Ap.
+            </MenuItem>
+          ) :  null}
         </MenuList>
       </Popover>
     </>

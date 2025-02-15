@@ -2,13 +2,13 @@ import type { CardProps } from '@mui/material/Card';
 import type { ChartOptions } from 'src/components/chart';
 
 import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
 import Divider from '@mui/material/Divider';
 import { useTheme } from '@mui/material/styles';
-import CardHeader from '@mui/material/CardHeader';
 
 import { fNumber } from 'src/utils/format-number';
 
-import { Chart, useChart, ChartLegends } from 'src/components/chart';
+import { Chart, ChartLegends, useChart } from 'src/components/chart';
 
 // ----------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ type Props = CardProps & {
   };
 };
 
-export function AnalyticsCurrentVisits({ title, subheader, chart, ...other }: Props) {
+export function AnalyticsStudentsAndLegalGuardian({ title, subheader, chart, ...other }: Props) {
   const theme = useTheme();
 
   const chartSeries = chart.series.map((item) => item.value);

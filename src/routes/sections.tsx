@@ -41,7 +41,6 @@ const renderFallback = (
 
 
 export function Router() {
-
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [role, setRole] = useState('');
 
@@ -54,6 +53,7 @@ export function Router() {
         setRole(decodedToken?.role);
       }
       setIsAuthenticated(!!token);
+      localStorage.clear();
     };
 
     checkAuth();

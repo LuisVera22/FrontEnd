@@ -9,7 +9,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 import Typography from '@mui/material/Typography';
 
-import { Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, TextField } from '@mui/material';
+import { Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 
 import { IStudent } from 'src/interfaces/IStudent';
 import { DashboardContent } from 'src/layouts/dashboard';
@@ -52,12 +52,13 @@ export function StudentView() {
     filterName,
   });
 
-  const notFound = !dataFiltered.length && !!filterName;
+  const notFound = !dataFiltered.length;
 
   const [newStudent, setNewStudent] = useState({
     code: '',
     name: '',
     lastName: '',
+    gender: '',
     direction: '',
     birthdate: '',
     legalGuardianId: 0,
@@ -68,6 +69,7 @@ export function StudentView() {
     identityDocument: '',
     name: '',
     lastName: '',
+    gender: '',
     birthdate: '',
     cellphoneNumber: '',
     email: '',
@@ -192,6 +194,16 @@ export function StudentView() {
             fullWidth
             margin="normal"
           />
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Género</InputLabel>
+            <Select
+              value={newStudent.gender}
+              onChange={(e) => setNewStudent({ ...newStudent, gender: e.target.value })}
+            >
+              <MenuItem value="varon">Varón</MenuItem>
+              <MenuItem value="mujer">Mujer</MenuItem>
+            </Select>
+          </FormControl>
           <TextField
             label="Dirección"
             value={newStudent.direction}
@@ -260,6 +272,21 @@ export function StudentView() {
                 fullWidth
                 margin="normal"
               />
+              <FormControl fullWidth margin="normal">
+                <InputLabel>Género del apoderado</InputLabel>
+                <Select
+                  value={newLegalGuardian.gender}
+                  onChange={(e) =>
+                    setNewLegalGuardian({
+                      ...newLegalGuardian,
+                      gender: e.target.value,
+                    })
+                  }
+                >
+                  <MenuItem value="varon">Varón</MenuItem>
+                  <MenuItem value="mujer">Mujer</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 label="Fecha de nacimiento del apoderado"
                 type="date"

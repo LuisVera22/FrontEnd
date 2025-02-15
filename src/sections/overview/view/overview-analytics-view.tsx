@@ -1,24 +1,65 @@
 import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
+import { useEffect, useState } from 'react';
 
 import { _posts, _tasks, _timeline } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { appsettings } from 'src/settings/appsettings';
+
 import { AnalyticsConversionRates } from '../analytics-conversion-rates';
 import { AnalyticsCurrentSubject } from '../analytics-current-subject';
-import { AnalyticsCurrentVisits } from '../analytics-current-visits';
+import { AnalyticsStudentsAndLegalGuardian } from '../analytics-current-visits';
+import { AnalyticsEnrrolledStudents } from '../analytics-enrrolled-students';
 import { AnalyticsNews } from '../analytics-news';
 import { AnalyticsOrderTimeline } from '../analytics-order-timeline';
 import { AnalyticsTasks } from '../analytics-tasks';
 import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
-import { AnalyticsWebsiteVisits } from '../analytics-website-visits';
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
 
 // ----------------------------------------------------------------------
 
 const givenName = localStorage.getItem('givenName');
 
+type GenderCounts = {
+  maleStudents: number;
+  femaleStudents: number;
+  maleGuardians: number;
+  femaleGuardians: number;
+};
+
+const fetchGenderCounts = async () => {
+  try {
+    const response = await fetch(`${appsettings.apiUrl}Analytics/genderCounts`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener los datos');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return null;
+  }
+};
+
+
 export function OverviewAnalyticsView() {
+  const [data, setData] = useState<GenderCounts | null>(null);
+
+  useEffect(() => {
+    fetchGenderCounts().then((result) => {
+      if (result) {
+        setData(result);
+      }
+    });
+  }, []);
+
   return (
     <DashboardContent maxWidth="xl">
       <Typography variant="h4" sx={{ mb: { xs: 3, md: 5 } }}>
@@ -82,28 +123,28 @@ export function OverviewAnalyticsView() {
         </Grid>
 
         <Grid xs={12} md={6} lg={4}>
-          <AnalyticsCurrentVisits
-            title="Current visits"
+          <AnalyticsStudentsAndLegalGuardian
+            title="Alumnos y Apoderados"
             chart={{
               series: [
-                { label: 'America', value: 3500 },
-                { label: 'Asia', value: 2500 },
-                { label: 'Europe', value: 1500 },
-                { label: 'Africa', value: 500 },
+                { label: 'Alumnos', value: data?.maleStudents || 0 },
+                { label: 'Alumnas', value: data?.femaleStudents || 0 },
+                { label: 'Apoderados', value: data?.maleGuardians || 0 },
+                { label: 'Apoderadas', value: data?.femaleGuardians || 0 },
               ],
             }}
           />
         </Grid>
 
         <Grid xs={12} md={6} lg={8}>
-          <AnalyticsWebsiteVisits
-            title="Website visits"
-            subheader="(+43%) than last year"
+          <AnalyticsEnrrolledStudents
+            title="Estudiantes Matriculados"
+            subheader="(+43%) que el año pasado"
             chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+              categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
               series: [
-                { name: 'Team A', data: [43, 33, 22, 37, 67, 68, 37, 24, 55] },
-                { name: 'Team B', data: [51, 70, 47, 67, 40, 37, 24, 70, 24] },
+                { name: 'Varones', data: [43, 33, 22, 37, 67, 68, 37, 24, 55] },
+                { name: 'Mujeres', data: [51, 70, 47, 67, 40, 37, 24, 70, 24] },
               ],
             }}
           />

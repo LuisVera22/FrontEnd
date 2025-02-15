@@ -20,7 +20,7 @@ import { _myAccount } from 'src/_mock';
 
 const logout = () => {
   localStorage.removeItem('token');
-  
+  localStorage.clear();
   window.location.href = '/sign-in';
 };
 
@@ -141,7 +141,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
 
         <Box sx={{ p: 1 }}>
           <Button fullWidth color="error" size="medium" variant="text" onClick={logout}>
-            Logout
+            Cerrar Sesión
           </Button>
         </Box>
       </Popover>
