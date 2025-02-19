@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { TextField } from '@mui/material';
+
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -13,8 +14,8 @@ import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
+import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -26,47 +27,40 @@ import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
 
-import { IDocente } from 'src/interfaces/IDocente';
-import { DocenteTableHead } from 'src/sections/docente/DocenteTableHead';
-import { DocenteTableRow } from 'src/sections/docente/DocenteTableRow';
-import { DocenteTableToolbar } from 'src/sections/docente/DocenteTableToolbar';
-import { TableEmptyRows } from 'src/sections/docente/table-empty-rows';
-import { TableNoData } from 'src/sections/docente/table-no-data';
-import { applyFilter, emptyRows, getComparator } from 'src/sections/docente/utils';
+import { IGradoSeccion } from 'src/interfaces/IGradoSeccion';
+import { IHorarios } from 'src/interfaces/IHorarios';
+import { HorariosTableHead } from 'src/sections/horarios/HorariosTableHead';
+import { HorariosTableRow } from 'src/sections/horarios/HorariosTableRow';
+import { TableEmptyRows } from 'src/sections/horarios/table-empty-rows';
+import { TableNoData } from 'src/sections/horarios/table-no-data';
+import { applyFilter, emptyRows, getComparator } from 'src/sections/horarios/utils';
 
-import type { DocenteProps } from 'src/sections/docente/DocenteTableRow';
+import type { HorariosProps } from 'src/sections/horarios/HorariosTableRow';
+import { HorariosTableToolbar } from '../HorariosTableToolbar';
 
 // ----------------------------------------------------------------------
 
-const token = localStorage.getItem('token');
-
-export function DocenteView() {
-const [docentes, setDocentes] = useState<IDocente[]>([]);
+export function HorariosView() {
+const [gradoSecciones, setGradoSecciones] = useState<IGradoSeccion[]>([]);
+const [gradoSeccionId, setGradoSeccionId] = useState<number>(0);
+const [horarios, setHorarios] = useState<IHorarios[]>([]);
 const [openDialog, setOpenDialog] = useState(false);
 const [open, setOpen] = useState(false);
-const [_docenteName, setDocenteName] = useState('');
-const [_docenteApellido, setDocenteApellido] = useState('');
-const [_docenteDni, setDocenteDni] = useState('');
-const [_docenteEspecialidad, setDocenteEspecialidad] = useState('');
-const [docenteToDelete, setDocenteToDelete] = useState<number | null>(null);
+const [_horariosHoraInicial, setHorariosHoraInicial] = useState('');
+const [horariosHoraFin, setHorariosHoraFin] = useState('');
+const [_horariosDiaSemana, setHorariosDiaSemana] = useState('');
+const [horariosToDelete, setHorarioToDelete] = useState<number | null>(null);
 const [openEdit, setOpenEdit] = useState(false);
-const [docenteToEdit, setDocenteToEdit] = useState<number | null>(null);
+const [horariosToEdit, setHorarioToEdit] = useState<number | null>(null);
 
-// Obtener Docentes
-const _docentes = async () => {
+const _horarios = async () => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Docente`, { 
-      method: 'GET', 
-      headers: { 
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(`${appsettings.apiUrl}Horario`, { method: 'GET' });
     if (response.ok) {
       const data = await response.json();
-      setDocentes(data);
+      setHorarios(data);
     } else {
-      console.error('Error al obtener los bancos:', response.status);
+      console.error('Error al obtener los Horarios:', response.status);
     }
   } catch (error) {
     console.error('Error en la petición:', error);
@@ -74,35 +68,56 @@ const _docentes = async () => {
 };
 
 useEffect(() => {
-  _docentes();
+  _horarios();
 }, []);
 
-// Registro de Docentes
+useEffect(() => {
+    const fetchGradoSecciones = async () => {
+      try {
+        const response = await fetch(`${appsettings.apiUrl}GradoSeccion`);
+        const data = await response.json();
+        setGradoSecciones(data);
+      } catch (error) {
+        console.error('Error al cargar los grados de sección:', error);
+      }
+    };
+    fetchGradoSecciones();
+  }, []);
+
+  const handleAsignarGradoSeccion = () => {
+    // Aquí solo asignamos el ID del GradoSección al horario, sin cambiar el GradoSección.
+    const updatedHorarios = { ...horarios, gradoSeccionId };
+    setHorarios(updatedHorarios); // Actualiza el estado de Horarios con el ID seleccionado
+    console.log(updatedHorarios); // Para verificar en la consola
+  };
+
+
+
+// Registro de Horarios
 const handleOpen = () => setOpen(true);
 const handleClose = () => setOpen(false);
 const handleSave = async () => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Docente`, { 
+    const response = await fetch(`${appsettings.apiUrl}Horario`, { 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nombre: _docenteName,
-        apellido: _docenteApellido,
-        dni: _docenteDni,
-        especialidad: _docenteEspecialidad
+        horaInicio: _horariosHoraInicial,
+        horaFin: horariosHoraFin,
+        diaSemana: _horariosDiaSemana,
+        gradoSeccionId 
       }),
     });
     if (response.ok) {
-      _docentes();
+      _horarios();
       setOpen(false);
-      setDocenteName('');
-      setDocenteApellido('');
-      setDocenteDni('');
-      setDocenteEspecialidad('');
-      toast.success('Docente registrado exitosamente', { autoClose: 3000, position: "top-right" });
+      setHorariosHoraInicial('');
+      setHorariosHoraFin('');
+      setHorariosDiaSemana('');
+      toast.success('Horario registrado exitosamente', { autoClose: 3000, position: "top-right" });
     } else {
-      console.error('Error al guardar el docente:', response.status);
-      toast.error('Error al registrar el docente', { autoClose: 3000, position: "top-right" });
+      console.error('Error al guardar el Horario:', response.status);
+      toast.error('Error al registrar el Horario', { autoClose: 3000, position: "top-right" });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
@@ -113,31 +128,31 @@ const handleCancel = () => {
   setOpen(false);
   setOpenDialog(false);
   setOpenEdit(false);
-  setDocenteToDelete(null);
-  setDocenteName('');
+  setHorarioToDelete(null);
+  setHorariosHoraInicial('');
   toast.info('Operación cancelada', { autoClose: 3000, position: "top-right" });
 };
 
 // Eliminar Docentes
 const handleDelete = async (id: number) => {
-  setDocenteToDelete(id);
+  setHorarioToDelete(id);
   setOpenDialog(true);
 };
 
 const confirmDelete = async () => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Docente/(id)?id=${docenteToDelete}`, {
+    const response = await fetch(`${appsettings.apiUrl}Horario/(id)?id=${horariosToDelete}`, {
       method: 'DELETE',
       headers: { 'Accept': '*/*' },
     });
     if (response.ok) {
-      _docentes();
+      _horarios();
       setOpenDialog(false);
-      toast.success('Banco eliminado exitosamente', { autoClose: 3000, position: "top-right" });
+      toast.success('Horario eliminado exitosamente', { autoClose: 3000, position: "top-right" });
     } else {
-      console.error('Error al eliminar el banco:', response.status);
+      console.error('Error al eliminar el Horario:', response.status);
       setOpenDialog(false);
-      toast.error('Error al eliminar el banco', { autoClose: 3000, position: "top-right" });
+      toast.error('Error al eliminar el Horario', { autoClose: 3000, position: "top-right" });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
@@ -148,92 +163,48 @@ const confirmDelete = async () => {
 
 const handleCloseDialog = () => {
   setOpenDialog(false);
-  setDocenteToDelete(null);
+  setHorarioToDelete(null);
 };
 
-// Desactivar Docentes
-const handleDesactivate = async (id: number) => {
-  try {
-    const response = await fetch(`${appsettings.apiUrl}Docente/desactivate/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Accept': '*/*',
-      },
-    });
-    if (response.ok) {
-      _docentes();
-      toast.success('Docente desactivado exitosamente', {autoClose: 3000,position: "top-right",});
-    } else {
-      console.error('Error al desactivar el Docente:', response.status);
-      toast.error('Error al desactivar el Docente', { autoClose: 3000, position: "top-right" });
-    }
-  } catch (error) {
-    console.error('Error en la petición:', error);
-    toast.error('Error en la petición', { autoClose: 3000, position: "top-right" });
-  }
-};
 
-// Reactivar Bancos
-const handleReinstate = async (id: number) => {
-  try {
-    const response = await fetch(`${appsettings.apiUrl}Docente/reinstate/${id}`, {
-      method: 'PUT',
-      headers: {
-        'Accept': '*/*',
-      },
-    });
-    if (response.ok) {
-      _docentes();
-      toast.success('Docente reingresado exitosamente', {autoClose: 3000,position: "top-right",});
-    } else {
-      console.error('Error al reingresar el Docente:', response.status);
-      toast.error('Error al reingresar el Docente', { autoClose: 3000, position: "top-right" });
-    }
-  } catch (error) {
-    console.error('Error en la petición:', error);
-    toast.error('Error en la petición', { autoClose: 3000, position: "top-right" });
-  }
-};
-
-// Función para editar un banco
-const handleEdit = (docente: IDocente) => {
-  setDocenteName(docente.nombre);
-  setDocenteApellido(docente.apellido); // Asignar apellido
-  setDocenteDni(docente.dni); // Asignar DNI
-  setDocenteEspecialidad(docente.especialidad); // Asignar especialidad
-  setDocenteToEdit(docente.id);
+// Función para editar un Horario
+const handleEdit = (horario: IHorarios) => {
+  setHorariosHoraInicial(horario.horaInicio);
+  setHorariosHoraFin(horario.horaFin); 
+  setHorariosDiaSemana(horario.diaSemana); 
+  setGradoSeccionId(horario.gradoSeccionId); 
+  setHorarioToEdit(horario.id);
   setOpenEdit(true);
 };
 
 // Función para guardar la edición
 const handleSaveEdit = async () => {
-  if (!docenteToEdit) return;
+  if (!horariosToEdit) return;
 
   try {
-    const response = await fetch(`${appsettings.apiUrl}Docente/${docenteToEdit}`, {
+    const response = await fetch(`${appsettings.apiUrl}Horario/${horariosToEdit}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        nombre: _docenteName,
-        apellido: _docenteApellido,
-        dni: _docenteDni,
-        especialidad: _docenteEspecialidad
+        horaInicio: _horariosHoraInicial,
+        horaFin: horariosHoraFin,
+        diaSemana: _horariosDiaSemana,
+        gradoSeccionId
       }),
     });
     if (response.ok) {
-      _docentes();
-      setOpenEdit(false);
-      setDocenteName('');
-      setDocenteApellido('');
-      setDocenteDni('');
-      setDocenteEspecialidad('');
-      toast.success('Docente actualizado exitosamente', {
+        _horarios();
+      setOpen(false);
+      setHorariosHoraInicial('');
+      setHorariosHoraFin('');
+      setHorariosDiaSemana('');
+      toast.success('Horario actualizado exitosamente', {
         autoClose: 3000,
         position: "top-right",
       });
     } else {
-      console.error('Error al editar el docente:', response.status);
-      toast.error('Error al editar el docente', {
+      console.error('Error al editar el Horario:', response.status);
+      toast.error('Error al editar el Horario', {
         autoClose: 3000,
         position: "top-right",
       });
@@ -248,19 +219,19 @@ const handleSaveEdit = async () => {
 
   const [filterName, setFilterName] = useState('');
 
-  const dataFiltered: DocenteProps[] = applyFilter({
-    inputData: docentes,
+  const dataFiltered: HorariosProps[] = applyFilter({
+    inputData: horarios,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
 
-  const notFound = !dataFiltered.length;
+  const notFound = !dataFiltered.length && !!filterName;
 
   return (
     <DashboardContent>
       <Box display="flex" alignItems="center" mb={5}>
         <Typography variant="h4" flexGrow={1}>
-          Docentes
+          Horarios
         </Typography>
         <Button
           variant="contained"
@@ -268,12 +239,12 @@ const handleSaveEdit = async () => {
           startIcon={<Iconify icon="mingcute:add-line" />}
           onClick={handleOpen}
         >
-          Agregar Docente
+          Agregar Horario
         </Button>
       </Box>
 
       <Card>
-        <DocenteTableToolbar
+        <HorariosTableToolbar
           numSelected={table.selected.length}
           filterName={filterName}
           onFilterName={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,87 +253,90 @@ const handleSaveEdit = async () => {
           }}
         />
 
-        <Modal open={open} onClose={handleClose}>
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: 400,
-              bgcolor: 'background.paper',
-              boxShadow: 24,
-              p: 4,
-            }}
-          >
-            <Typography variant="h6" component="h2" mb={2}>
-              Registrar Docente
-            </Typography>
-            <TextField
-              fullWidth
-              label="Nombre del Docente"
-              value={_docenteName}
-              onChange={(e) => setDocenteName(e.target.value)}
-              variant="outlined"
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Apellido del Docente"
-              value={_docenteApellido}
-              onChange={(e) => setDocenteApellido(e.target.value)}
-              variant="outlined"
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="DNI del Docente"
-              value={_docenteDni}
-              onChange={(e) => setDocenteDni(e.target.value)}
-              variant="outlined"
-              margin="normal"
-            />
-            <TextField
-              fullWidth
-              label="Especialidad del Docente"
-              value={_docenteEspecialidad}
-              onChange={(e) => setDocenteEspecialidad(e.target.value)}
-              variant="outlined"
-              margin="normal"
-            />
-            <Box mt={2} display="flex" justifyContent="flex-end">
-              <Button onClick={handleCancel} sx={{ mr: 2 }}>
-                Cancelar
-              </Button>
-              <Button variant="contained" onClick={handleSave}>
-                Guardar
-              </Button>
-            </Box>
-          </Box>
-        </Modal>
-        
+<Modal open={open} onClose={handleClose}>
+  <Box
+    sx={{
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: 400,
+      bgcolor: 'background.paper',
+      boxShadow: 24,
+      p: 4,
+    }}
+  >
+    <Typography variant="h6" component="h2" mb={2}>
+      Registrar Horarios
+    </Typography>
+    <TextField
+          fullWidth
+          label="Hora de Inicio"
+          value={_horariosHoraInicial}
+          onChange={(e) => setHorariosHoraInicial(e.target.value)}
+          variant="outlined"
+          margin="normal"
+        />
+       <TextField
+          fullWidth
+          label="Hora de Fin"
+          value={horariosHoraFin}
+          onChange={(e) => setHorariosHoraFin(e.target.value)}
+          variant="outlined"
+          margin="normal"
+        />
+   <TextField
+          fullWidth
+          label="Día de la Semana"
+          value={_horariosDiaSemana}
+          onChange={(e) => setHorariosDiaSemana(e.target.value)}
+          variant="outlined"
+          margin="normal"
+        />
+   <FormControl fullWidth margin="normal">
+        <InputLabel>Grado y Sección</InputLabel>
+        <Select
+          value={gradoSeccionId}
+          onChange={handleAsignarGradoSeccion} // Maneja el cambio del select
+          label="Grado y Sección"
+        >
+          {gradoSecciones.map((gradoSeccion) => (
+            <MenuItem key={gradoSeccion.id} value={gradoSeccion.id}>
+              {gradoSeccion.nombre} {/* Muestra el nombre de la sección */}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+    <Box mt={2} display="flex" justifyContent="flex-end">
+      <Button onClick={handleCancel} sx={{ mr: 2 }}>
+        Cancelar
+      </Button>
+      <Button variant="contained" onClick={handleSave}>
+        Guardar
+      </Button>
+    </Box>
+  </Box>
+</Modal>
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 800 }}>
-              <DocenteTableHead
+              <HorariosTableHead
                 order={table.order}
                 orderBy={table.orderBy}
-                rowCount={docentes.length}
+                rowCount={horarios.length}
                 numSelected={table.selected.length}
                 onSort={table.onSort}
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    docentes.map((docente) => String(docente.id))
+                    horarios.map((horario) => String(horario.id))
                   )
                 }
                 headLabel={[
-                  { id: 'name', label: 'Nombre' },
-                  { id: 'apellido', label: 'Apellido' },
-                  { id: 'dni', label: 'DNI' },
-                  { id: 'especialidad', label: 'Especialidad' },
-                  { id: 'estado', label: 'Estado' },
-                  { id: '', label: ''},
+                  { id: 'horaInicio', label: 'Hora Inicio' },
+                  { id: 'horaFin', label: 'Hora Fin' },
+                  { id: 'diaSemana', label: 'Día Semana' },
+                  { id: 'gradoSeccionId', label: 'Id Grado Sección' },
                 ]}
               />
               <TableBody>
@@ -372,21 +346,19 @@ const handleSaveEdit = async () => {
                     table.page * table.rowsPerPage + table.rowsPerPage
                   )
                   .map((row) => (
-                    <DocenteTableRow
+                    <HorariosTableRow
                       key={row.id}
                       row={row}
                       selected={table.selected.includes(String(row.id))}
                       onSelectRow={() => table.onSelectRow(String(row.id))}
                       onDelete={handleDelete}
-                      onDesactivate={handleDesactivate}
-                      onReinstate={handleReinstate}
                       onEdit={handleEdit}
                     />
                   ))}
 
                 <TableEmptyRows
                   height={68}
-                  emptyRows={emptyRows(table.page, table.rowsPerPage, docentes.length)}
+                  emptyRows={emptyRows(table.page, table.rowsPerPage, horarios.length)}
                 />
 
                 {notFound && <TableNoData searchQuery={filterName} />}
@@ -398,7 +370,7 @@ const handleSaveEdit = async () => {
         <TablePagination
           component="div"
           page={table.page}
-          count={docentes.length}
+          count={horarios.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
@@ -412,7 +384,7 @@ const handleSaveEdit = async () => {
         <DialogTitle>Confirmación de Eliminación</DialogTitle>
         <DialogContent>
           <Typography>
-            ¿Estás seguro de que deseas eliminar este Docente?
+            ¿Estás seguro de que deseas eliminar este Horario?
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -443,33 +415,33 @@ const handleSaveEdit = async () => {
           </Typography>
           <TextField
             fullWidth
-            label="Nombre del Docente"
-            value={_docenteName}
-            onChange={(e) => setDocenteName(e.target.value)}
+            label="Hora inicio"
+            value={_horariosHoraInicial}
+            onChange={(e) => setHorariosHoraInicial(e.target.value)}
             variant="outlined"
             margin="normal"
           />
            <TextField
             fullWidth
-            label="Apellido del Docente"
-            value={_docenteApellido}
-            onChange={(e) => setDocenteApellido(e.target.value)}
+            label="Hora final"
+            value={horariosHoraFin}
+            onChange={(e) => setHorariosHoraFin(e.target.value)}
             variant="outlined"
             margin="normal"
           />
            <TextField
             fullWidth
-            label="Dni del Docente"
-            value={_docenteDni}
-            onChange={(e) => setDocenteDni(e.target.value)}
+            label="Dia de la Semana"
+            value={_horariosDiaSemana}
+            onChange={(e) => setHorariosDiaSemana(e.target.value)}
             variant="outlined"
             margin="normal"
           />
            <TextField
             fullWidth
             label="Especialidad del Docente"
-            value={_docenteEspecialidad}
-            onChange={(e) => setDocenteEspecialidad(e.target.value)}
+            value={gradoSeccionId}
+            onChange={(e) => setGradoSeccionId(Number(e.target.value))}
             variant="outlined"
             margin="normal"
           />
@@ -487,13 +459,14 @@ const handleSaveEdit = async () => {
       <ToastContainer />
     </DashboardContent>
   );
-}
+ }
+
 
 // ----------------------------------------------------------------------
 
 export function useTable() {
   const [page, setPage] = useState(0);
-  const [orderBy, setOrderBy] = useState('name');
+  const [orderBy, setOrderBy] = useState('diaSemana');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState<string[]>([]);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');

@@ -10,6 +10,7 @@ import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
 import { Iconify } from 'src/components/iconify';
+import { LegalGuardianProps } from '../legalGuardian/legalGuardian-table-row';
 
 // ----------------------------------------------------------------------
 
@@ -22,12 +23,15 @@ export type StudentProps = {
   direction: string;
   birthdate: string;
   legalGuardianId: number;
+  legalGuardian: LegalGuardianProps | null;
 };
 
 type StudentTableRowProps = {
   row: StudentProps;
   selected: boolean;
   onSelectRow: () => void;
+  onEdit: (student: StudentProps) => void;
+  onDelete: (id: number) => void;
   assingLegalGuardian: (id: number) => void;
 };
 
@@ -35,6 +39,8 @@ export function StudentTableRow({
   row,
   selected,
   onSelectRow,
+  onEdit,
+  onDelete,
   assingLegalGuardian,
 }: StudentTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
@@ -101,12 +107,12 @@ export function StudentTableRow({
             },
           }}
         >
-          <MenuItem onClick={handleClosePopover}>
+          <MenuItem onClick={() => onEdit(row)}>
             <Iconify icon="solar:pen-bold" />
             Editar
           </MenuItem>
 
-          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={() => onDelete(row.id)} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
             Eliminar
           </MenuItem>

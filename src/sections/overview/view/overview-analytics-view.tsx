@@ -2,19 +2,15 @@ import Typography from '@mui/material/Typography';
 import Grid from '@mui/material/Unstable_Grid2';
 import { useEffect, useState } from 'react';
 
-import { _posts, _tasks, _timeline } from 'src/_mock';
+import { _tasks, _timeline } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { appsettings } from 'src/settings/appsettings';
 
-import { AnalyticsConversionRates } from '../analytics-conversion-rates';
-import { AnalyticsCurrentSubject } from '../analytics-current-subject';
 import { AnalyticsStudentsAndLegalGuardian } from '../analytics-current-visits';
 import { AnalyticsEnrrolledStudents } from '../analytics-enrrolled-students';
-import { AnalyticsNews } from '../analytics-news';
 import { AnalyticsOrderTimeline } from '../analytics-order-timeline';
 import { AnalyticsTasks } from '../analytics-tasks';
-import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
 
 // ----------------------------------------------------------------------
@@ -26,6 +22,56 @@ type GenderCounts = {
   femaleStudents: number;
   maleGuardians: number;
   femaleGuardians: number;
+};
+
+type MonthlyCountDto = {
+  year: number;
+  month: number;
+  count: number;
+};
+
+type StatisticsDto = {
+  total: number;
+  percentageChange: number;
+  monthlyCounts: MonthlyCountDto[];
+};
+
+type MonthlyGenderStudentCountDTO = {
+  total: number;
+  maleStudentCount: MonthlyCountDto[];
+  femaleStudentCount: MonthlyCountDto[];
+}
+
+// Función para obtener los últimos 8 meses
+const getLast8Months = () => {
+  const months: string[] = [];
+  const currentDate = new Date();
+
+  for (let i = 7; i >= 0; i -= 1) {
+    const month = new Date(currentDate);
+    month.setMonth(currentDate.getMonth() - i);
+    const monthName = month.toLocaleString('default', { month: 'short' });
+    const year = month.getFullYear();
+    months.push(`${monthName} ${year}`);
+  }
+
+  return months;
+};
+
+// Función para obtener los últimos 9 meses
+const getLast9Months = () => {
+  const months: string[] = [];
+  const currentDate = new Date();
+
+  for (let i = 8; i >= 0; i -= 1) {
+    const month = new Date(currentDate);
+    month.setMonth(currentDate.getMonth() - i);
+    const monthName = month.toLocaleString('default', { month: 'short' });
+    const year = month.getFullYear();
+    months.push(`${monthName} ${year}`);
+  }
+
+  return months;
 };
 
 const fetchGenderCounts = async () => {
@@ -48,9 +94,71 @@ const fetchGenderCounts = async () => {
   }
 };
 
+const fetchStudentStatistics = async (): Promise<StatisticsDto | null> => {
+  try {
+    const response = await fetch(`${appsettings.apiUrl}Analytics/registeredStudents`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener los datos');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return null;
+  }
+};
+
+const fetchTeachersStatistics = async (): Promise<StatisticsDto | null> => {
+  try {
+    const response = await fetch(`${appsettings.apiUrl}Analytics/registeredTeachers`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener los datos');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return null;
+  }
+};
+
+const fetchStudentStatisticsByGender = async (): Promise<MonthlyGenderStudentCountDTO | null> => {
+  try {
+    const response = await fetch(`${appsettings.apiUrl}Analytics/registeredStudentsByGender`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al obtener los datos');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error:', error);
+    return null;
+  }
+};
 
 export function OverviewAnalyticsView() {
   const [data, setData] = useState<GenderCounts | null>(null);
+  const [data2, setData2] = useState<StatisticsDto | null>(null);
+  const [teachersData, setTeachersData] = useState<StatisticsDto | null>(null);
+  const [studentsData, setStudentsData] = useState<MonthlyGenderStudentCountDTO | null>(null);
 
   useEffect(() => {
     fetchGenderCounts().then((result) => {
@@ -59,6 +167,35 @@ export function OverviewAnalyticsView() {
       }
     });
   }, []);
+
+  useEffect(() => {
+    fetchStudentStatistics().then((result) => {
+      if (result) {
+        setData2(result);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchTeachersStatistics().then((result) => {
+      if (result) {
+        setTeachersData(result);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    fetchStudentStatisticsByGender().then((result) => {
+      if (result) {
+        setStudentsData(result);
+      }
+    });
+  }, []);
+
+  const last8Months = getLast8Months();
+  const last9Months = getLast9Months();
+
+  const subheader = `(${data2?.percentageChange || 0}%) en los últimos 9 meses`;
 
   return (
     <DashboardContent maxWidth="xl">
@@ -69,34 +206,34 @@ export function OverviewAnalyticsView() {
       <Grid container spacing={3}>
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Weekly sales"
-            percent={2.6}
-            total={714000}
+            title="Docentes"
+            percent={teachersData?.percentageChange || 0}
+            total={teachersData?.total || 0}
             icon={<img alt="icon" src="/assets/icons/glass/ic-glass-bag.svg" />}
             chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [22, 8, 35, 50, 82, 84, 77, 12],
+              categories: last8Months,
+            series: teachersData?.monthlyCounts.map((month) => month.count) || [],
             }}
           />
         </Grid>
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="New users"
-            percent={-0.1}
-            total={1352831}
+            title="Estudiantes"
+            percent={data2?.percentageChange || 0}
+            total={data2?.total || 0}
             color="secondary"
             icon={<img alt="icon" src="/assets/icons/glass/ic-glass-users.svg" />}
             chart={{
-              categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
-              series: [56, 47, 40, 62, 73, 30, 23, 54],
+              categories: last8Months,
+              series: data2?.monthlyCounts.map((month) => month.count) || [],
             }}
           />
         </Grid>
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Purchase orders"
+            title="Cobros Pendientes"
             percent={2.8}
             total={1723315}
             color="warning"
@@ -110,7 +247,7 @@ export function OverviewAnalyticsView() {
 
         <Grid xs={12} sm={6} md={3}>
           <AnalyticsWidgetSummary
-            title="Messages"
+            title="Cobros Realizados"
             percent={3.6}
             total={234}
             color="error"
@@ -138,64 +275,20 @@ export function OverviewAnalyticsView() {
 
         <Grid xs={12} md={6} lg={8}>
           <AnalyticsEnrrolledStudents
-            title="Estudiantes Matriculados"
-            subheader="(+43%) que el año pasado"
+            title="Estudiantes Registrados"
+            subheader= {subheader}
             chart={{
-              categories: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep'],
+              categories: last9Months,
               series: [
-                { name: 'Varones', data: [43, 33, 22, 37, 67, 68, 37, 24, 55] },
-                { name: 'Mujeres', data: [51, 70, 47, 67, 40, 37, 24, 70, 24] },
+                { name: 'Varones', data: studentsData?.maleStudentCount.map((month) => month.count) || [] },
+                { name: 'Mujeres', data: studentsData?.femaleStudentCount.map((month) => month.count) || [] },
               ],
             }}
           />
-        </Grid>
-
-        <Grid xs={12} md={6} lg={8}>
-          <AnalyticsConversionRates
-            title="Conversion rates"
-            subheader="(+43%) than last year"
-            chart={{
-              categories: ['Italy', 'Japan', 'China', 'Canada', 'France'],
-              series: [
-                { name: '2022', data: [44, 55, 41, 64, 22] },
-                { name: '2023', data: [53, 32, 33, 52, 13] },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid xs={12} md={6} lg={4}>
-          <AnalyticsCurrentSubject
-            title="Current subject"
-            chart={{
-              categories: ['English', 'History', 'Physics', 'Geography', 'Chinese', 'Math'],
-              series: [
-                { name: 'Series 1', data: [80, 50, 30, 40, 100, 20] },
-                { name: 'Series 2', data: [20, 30, 40, 80, 20, 80] },
-                { name: 'Series 3', data: [44, 76, 78, 13, 43, 10] },
-              ],
-            }}
-          />
-        </Grid>
-
-        <Grid xs={12} md={6} lg={8}>
-          <AnalyticsNews title="News" list={_posts.slice(0, 5)} />
         </Grid>
 
         <Grid xs={12} md={6} lg={4}>
           <AnalyticsOrderTimeline title="Order timeline" list={_timeline} />
-        </Grid>
-
-        <Grid xs={12} md={6} lg={4}>
-          <AnalyticsTrafficBySite
-            title="Traffic by site"
-            list={[
-              { value: 'facebook', label: 'Facebook', total: 323234 },
-              { value: 'google', label: 'Google', total: 341212 },
-              { value: 'linkedin', label: 'Linkedin', total: 411213 },
-              { value: 'twitter', label: 'Twitter', total: 443232 },
-            ]}
-          />
         </Grid>
 
         <Grid xs={12} md={6} lg={8}>

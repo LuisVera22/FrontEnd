@@ -9,10 +9,12 @@ import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 import Typography from '@mui/material/Typography';
 
-import { Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Select, TextField } from '@mui/material';
 
 import { IStudent } from 'src/interfaces/IStudent';
 import { DashboardContent } from 'src/layouts/dashboard';
+
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 import { appsettings } from 'src/settings/appsettings';
 
@@ -27,6 +29,7 @@ import { TableEmptyRows } from '../table-empty-rows';
 import { TableNoData } from '../table-no-data';
 import { applyFilter, emptyRows, getComparator } from '../utils';
 
+import { StudentRegisterModal } from '../student-modal-register';
 import type { StudentProps } from '../student-table-row';
 
 // ----------------------------------------------------------------------
@@ -35,10 +38,43 @@ if (!token) {
   window.location.href = '/sign-in';
 }
 // ----------------------------------------------------------------------
+type LegalGuardian = {
+  identityDocument: string;
+  name: string;
+  lastName: string;
+  gender: string;
+  birthdate: string;
+  cellphoneNumber: string;
+  email: string;
+  direction: string;
+};
+
+type NewStudentRequest = {
+  id: number
+  code: string;
+  name: string;
+  lastName: string;
+  direction: string;
+  gender: string;
+  birthdate: string;
+  legalGuardianId?: number;
+  legalGuardian?: LegalGuardian;
+};
+
+type StudentRequest = {
+  id: number;
+  code: string;
+  name: string;
+  lastName: string;
+  direction: string;
+  gender: string;
+  birthdate: string;
+  legalGuardianId?: number;
+  legalGuardian?: LegalGuardian;
+};
+
 export function StudentView() {
   const [open, setOpen] = useState(false);
-
-  const [addLegalGuardian, setAddLegalGuardian] = useState(false);
 
   const [students, setStudents] = useState<IStudent[]>([]);
 
@@ -54,18 +90,20 @@ export function StudentView() {
 
   const notFound = !dataFiltered.length;
 
-  const [newStudent, setNewStudent] = useState({
+  const [newStudent, setNewStudent] = useState<NewStudentRequest>({
+    id: 0,
     code: '',
     name: '',
     lastName: '',
-    gender: '',
     direction: '',
+    gender: '',
     birthdate: '',
-    legalGuardianId: 0,
-    legalGuardian: null,
+    legalGuardianId: undefined,
+    legalGuardian: undefined,
   });
 
   const [newLegalGuardian, setNewLegalGuardian] = useState({
+    id: 0,
     identityDocument: '',
     name: '',
     lastName: '',
@@ -76,8 +114,24 @@ export function StudentView() {
     direction: '',
   });
 
-  // Obtener Estudiantes
-    const _students = async () => {
+  const handleEdit = (student: StudentProps) => {
+    setNewStudent({
+      id: student.id,
+      code: student.code,
+      name: student.name,
+      lastName: student.lastName,
+      gender: student.gender,
+      direction: student.direction,
+      birthdate: student.birthdate,
+      legalGuardianId: student.legalGuardianId,
+      legalGuardian: undefined,
+    });
+    setOpen(true);
+  };  
+
+  const [addLegalGuardian, setAddLegalGuardian] = useState(false);
+
+  const _students = async () => {
         if (!token){
             console.error('No se encontró el token de autenticación');
             return;
@@ -99,52 +153,114 @@ export function StudentView() {
         } catch (error) {
             console.error('Error en la petición:', error);
         }
-    };
+  };
 
     useEffect(() => {
         _students();
     }, []);
-
-  // Registrar Estudiante
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewStudent((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  
+  const resetState = () => {
+    setNewStudent({
+      id: 0,
+      code: '',
+      name: '',
+      lastName: '',
+      direction: '',
+      gender: '',
+      birthdate: '',
+      legalGuardianId: undefined,
+      legalGuardian: undefined,
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (studentData: NewStudentRequest | StudentRequest, isEdit: boolean) => {
+    if (!token) {
+      console.error('No se encontró el token de autenticación');
+      return;
+    }
+
+    try {
+      let response;
+      if (isEdit) {
+        // Actualización (PUT)
+        response = await fetch(`${appsettings.apiUrl}Student/${studentData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(studentData),
+        });
+      } else {
+        // Registro (POST)
+        response = await fetch(`${appsettings.apiUrl}Student`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify(studentData),
+        });
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        toast.success(isEdit ? 'Estudiante editado exitosamente' : 'Estudiante registrado exitosamente', {
+          autoClose: 3000,
+          position: "top-right",
+        });
+        // Reiniciar estado después de una solicitud exitosa
+        resetState();
+        setOpen(false);
+      } else {
+        throw new Error('Error en la solicitud');
+      }
+    } catch (error) {
+      console.error('Error en la petición:', error);
+      toast.error('Hubo un error al procesar la solicitud', {
+        autoClose: 3000,
+        position: "top-right",
+      });
+    }
+  };
   
-    // Si no se marca el checkbox de apoderado, asignamos `null` a legalGuardian
-    const studentToSubmit = {
-      ...newStudent,
-      legalGuardian: addLegalGuardian ? newLegalGuardian : null,
-    };
+  // Eliminar Estudiante
+  const handleDelete = async (studentId: number) => {
+    if (!token) {
+      console.error('No se encontró el token de autenticación');
+      return;
+    }
   
     try {
-      const response = await fetch(`${appsettings.apiUrl}Student`, {
-        method: 'POST',
+      const response = await fetch(`${appsettings.apiUrl}Student/${studentId}`, {
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(studentToSubmit),
       });
   
       if (response.ok) {
-        const data = await response.json();
-        setStudents((prev) => [...prev, data]);
-        handleClose();
+        setStudents((prev) => prev.filter(student => student.id !== studentId));
+        toast.success('Estudiante eliminado exitosamente', {
+                  autoClose: 3000,
+                  position: "top-right",
+                });
       } else {
-        console.error('Error al registrar el estudiante:', response);
+        console.error('Error al eliminar el estudiante:', response);
+        toast.error('Error al eliminar el etudiante.', {
+          autoClose: 3000,
+          position: "top-right",
+        });
       }
     } catch (error) {
       console.error('Error en la petición:', error);
+      toast.error('Error en la petición.', {
+        autoClose: 3000,
+        position: "top-right",
+      });
     }
   };
   
@@ -165,193 +281,18 @@ export function StudentView() {
         </Button>
       </Box>
       
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>Registrar Estudiante</DialogTitle>
-        <DialogContent
-          sx={{
-            maxHeight: '60vh', // Limitar la altura máxima
-            overflowY: 'auto', // Hacer que el contenido sea desplazable
-          }}
-        >
-          <TextField
-            label="DNI"
-            value={newStudent.code}
-            onChange={(e) => setNewStudent({ ...newStudent, code: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Nombre"
-            value={newStudent.name}
-            onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Apellido"
-            value={newStudent.lastName}
-            onChange={(e) => setNewStudent({ ...newStudent, lastName: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Género</InputLabel>
-            <Select
-              value={newStudent.gender}
-              onChange={(e) => setNewStudent({ ...newStudent, gender: e.target.value })}
-            >
-              <MenuItem value="varon">Varón</MenuItem>
-              <MenuItem value="mujer">Mujer</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="Dirección"
-            value={newStudent.direction}
-            onChange={(e) => setNewStudent({ ...newStudent, direction: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Fecha de nacimiento"
-            type="date"
-            value={newStudent.birthdate}
-            onChange={(e) => setNewStudent({ ...newStudent, birthdate: e.target.value })}
-            fullWidth
-            margin="normal"
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
+      <StudentRegisterModal
+        open={open}
+        onClose={handleClose}
+        onSubmit={handleSubmit}
+        student={newStudent}
+        setStudent={setNewStudent}
+        addLegalGuardian={addLegalGuardian}
+        setAddLegalGuardian={setAddLegalGuardian}
+        newLegalGuardian={newLegalGuardian}
+        setNewLegalGuardian={setNewLegalGuardian}
+      />
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={addLegalGuardian}
-                onChange={(e) => setAddLegalGuardian(e.target.checked)}
-                name="addLegalGuardian"
-              />
-            }
-            label="Agregar apoderado"
-          />
-
-          {addLegalGuardian && (
-            <>
-              <TextField
-                label="DNI del apoderado"
-                value={newLegalGuardian.identityDocument}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    identityDocument: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Nombre del apoderado"
-                value={newLegalGuardian.name}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    name: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Apellido del apoderado"
-                value={newLegalGuardian.lastName}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    lastName: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Género del apoderado</InputLabel>
-                <Select
-                  value={newLegalGuardian.gender}
-                  onChange={(e) =>
-                    setNewLegalGuardian({
-                      ...newLegalGuardian,
-                      gender: e.target.value,
-                    })
-                  }
-                >
-                  <MenuItem value="varon">Varón</MenuItem>
-                  <MenuItem value="mujer">Mujer</MenuItem>
-                </Select>
-              </FormControl>
-              <TextField
-                label="Fecha de nacimiento del apoderado"
-                type="date"
-                value={newLegalGuardian.birthdate}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    birthdate: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-              <TextField
-                label="Número de celular del apoderado"
-                value={newLegalGuardian.cellphoneNumber}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    cellphoneNumber: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Correo electrónico del apoderado"
-                value={newLegalGuardian.email}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    email: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Dirección del apoderado"
-                value={newLegalGuardian.direction}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    direction: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-            </>
-          )}
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={handleClose} color="primary" >
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} color="primary" variant="contained">
-            Registrar
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Card>
         <StudentTableToolbar
@@ -399,6 +340,9 @@ export function StudentView() {
                       row={row}
                       selected={table.selected.includes(String(row.id))}
                       onSelectRow={() => table.onSelectRow(String(row.id))}
+                      onEdit={() => handleEdit(row)}
+                      onDelete={(id) => handleDelete(id)}
+                      assingLegalGuardian={(id) => console.log(id)}
                     />
                   ))}
 
@@ -425,6 +369,7 @@ export function StudentView() {
           labelDisplayedRows={({ from, to, count }) => `Página ${from}-${to} de ${count}`}
         />
       </Card>
+      <ToastContainer />
     </DashboardContent>
   );
 }

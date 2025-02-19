@@ -17,10 +17,15 @@ import { appsettings } from 'src/settings/appsettings';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import { TableEmptyRows } from '../table-empty-rows';
 import { TableNoData } from '../table-no-data';
 import { applyFilter, emptyRows, getComparator } from '../utils';
 
+import { EditLegalGuardianModal } from '../legalGuardian-modal-edit';
+import { AddLegalGuardianModal } from '../legalGuardian-modal-register';
 import { LegalGuardianTableHead } from '../legalGuardian-table-head';
 import { LegalGuardianTableRow, type LegalGuardianProps } from '../legalGuardian-table-row';
 import { LegalGuardianTableToolbar } from '../legalGuardian-table-toolbar';
@@ -31,9 +36,23 @@ if (!token) {
   window.location.href = '/sign-in';
 }
 
+const emptyGuardian: ILegalGuardian = {
+  id: 0,
+  identityDocument: '',
+  name: '',
+  lastName: '',
+  gender: '',
+  birthdate: '', 
+  cellphoneNumber: '',
+  email: '',
+  direction: '',
+};
+
 export function LegalGuardianView() {
   const [legalGuardians, setLegalGuardians] = useState<ILegalGuardian[]>([]);
-
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedGuardian, setSelectedGuardian] = useState<ILegalGuardian | null>(null);
+  const [openEditModal, setOpenEditModal] = useState(false);
   const table = useTable();
 
   const [filterName, setFilterName] = useState('');
@@ -46,7 +65,7 @@ export function LegalGuardianView() {
 
   const notFound = !dataFiltered.length;
 
-  // Obtener Estudiantes
+  // Obtener Apoderado
     const _legalGuardians = async () => {
         if (!token){
             console.error('No se encontró el token de autenticación');
@@ -70,11 +89,130 @@ export function LegalGuardianView() {
             console.error('Error en la petición:', error);
         }
     };
+  
+  // Crear Apoderado
+  const handleSave = async (newGuardian: ILegalGuardian) => {
+    if (!token) {
+      console.error('No se encontró el token de autenticación');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${appsettings.apiUrl}LegalGuardian`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(newGuardian),
+      });
+
+      if (response.ok) {
+        const savedGuardian = await response.json();
+        setLegalGuardians((prevGuardians) => [...prevGuardians, savedGuardian]);
+        _legalGuardians();
+        setOpenModal(false); 
+        toast.success('Apoderado creado exitosamente', {
+                autoClose: 3000,
+                position: "top-right",
+              });
+      } else {
+        console.error('Error al registrar el apoderado:', response);
+      }
+    } catch (error) {
+      console.error('Error en la petición:', error);
+    }
+  };
+
+  // Eliminar Apoderado
+  const handleDelete = async (id: number) => {
+    if (!token) {
+      console.error('No se encontró el token de autenticación');
+      return;
+    }
+  
+    try {
+      const response = await fetch(`${appsettings.apiUrl}LegalGuardian/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+  
+      if (response.ok) {
+        setLegalGuardians(legalGuardians.filter((guardian) => guardian.id !== id));
+        toast.success('Apoderado eliminado exitosamente', {
+          autoClose: 3000,
+          position: "top-right",
+        });
+      } else {
+        console.error('Error al eliminar el apoderado:', response);
+      }
+    } catch (error) {
+      console.error('Error en la petición:', error);
+    }
+  };
+
+  // Editar Apoderado
+  const handleEdit = (id: number) => {
+    const guardian = legalGuardians.find((lg) => lg.id === id);
+    if (guardian) {
+      setSelectedGuardian(guardian);
+      setOpenEditModal(true);
+    }
+  };
+  
+  const handleSaveEdit = async (updatedGuardian: ILegalGuardian) => {
+    if (!token) {
+      console.error('No se encontró el token de autenticación');
+      return;
+    }
+  
+    try {
+      const response = await fetch(`${appsettings.apiUrl}LegalGuardian/${updatedGuardian.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedGuardian),
+      });
+  
+      const responseText = await response.text();
+  
+      if (response.ok) {
+        try {
+          const updatedData = JSON.parse(responseText);
+  
+          setLegalGuardians((prevGuardians) =>
+            prevGuardians.map((guardian) =>
+              guardian.id === updatedData.id ? updatedData : guardian
+            )
+          );
+          _legalGuardians();
+          setOpenEditModal(false);
+          toast.success('Apoderado actualizado exitosamente', {
+                  autoClose: 3000,
+                  position: "top-right",
+                });
+        } catch (e) {
+          console.error('Error al parsear JSON:', e);
+          console.error('Respuesta no válida:', responseText);
+        }
+      } else {
+        console.error('Error al actualizar el apoderado:', responseText);
+      }
+    } catch (error) {
+      console.error('Error en la petición:', error);
+    }
+  };  
 
     useEffect(() => {
       _legalGuardians();
     }, []);
-
+  
+  
   return (
     <DashboardContent>
       <Box display="flex" alignItems="center" mb={5}>
@@ -85,6 +223,7 @@ export function LegalGuardianView() {
           variant="contained"
           color="inherit"
           startIcon={<Iconify icon="mingcute:add-line" />}
+          onClick={() => setOpenModal(true)}
         >
           Registrar apoderado
         </Button>
@@ -136,6 +275,8 @@ export function LegalGuardianView() {
                       row={row}
                       selected={table.selected.includes(String(row.id))}
                       onSelectRow={() => table.onSelectRow(String(row.id))}
+                      onDelete={() => handleDelete(row.id)}
+                      onEdit={() => handleEdit(row.id)}
                     />
                   ))}
 
@@ -161,7 +302,21 @@ export function LegalGuardianView() {
           labelRowsPerPage="Registros por página"
           labelDisplayedRows={({ from, to, count }) => `Página ${from}-${to} de ${count}`}
         />
+
+        <AddLegalGuardianModal
+          open={openModal}
+          onClose={() => setOpenModal(false)}
+          onSave={handleSave}
+        />
+
+        <EditLegalGuardianModal
+          open={openEditModal}
+          onClose={() => setOpenEditModal(false)}
+          onSave={handleSaveEdit}
+          initialData={selectedGuardian || emptyGuardian}
+        />
       </Card>
+      <ToastContainer />
     </DashboardContent>
   );
 }

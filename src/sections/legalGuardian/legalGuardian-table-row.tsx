@@ -10,6 +10,7 @@ import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
 import { Iconify } from 'src/components/iconify';
+import { ILegalGuardian } from 'src/interfaces/ILegalGuardian';
 
 // ----------------------------------------------------------------------
 
@@ -29,9 +30,17 @@ type LegalGuardianTableRowProps = {
   row: LegalGuardianProps;
   selected: boolean;
   onSelectRow: () => void;
+  onEdit: (bank : ILegalGuardian) => void;
+  onDelete: (id: number) => void;
 };
 
-export function LegalGuardianTableRow({ row, selected, onSelectRow }: LegalGuardianTableRowProps) {
+export function LegalGuardianTableRow({ 
+  row,
+  selected,
+  onSelectRow,
+  onEdit,
+  onDelete,
+}: LegalGuardianTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -93,14 +102,14 @@ export function LegalGuardianTableRow({ row, selected, onSelectRow }: LegalGuard
             },
           }}
         >
-          <MenuItem onClick={handleClosePopover}>
+          <MenuItem onClick={() => onEdit(row)}>
             <Iconify icon="solar:pen-bold" />
-            Edit
+            Editar
           </MenuItem>
 
-          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={() => onDelete(row.id)} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete
+            Eliminar
           </MenuItem>
         </MenuList>
       </Popover>

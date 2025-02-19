@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(userRole || '')) {
-    return <Navigate to="/404" replace/>;
+    return <Navigate to="/403" replace/>;
   }
 
   return children;

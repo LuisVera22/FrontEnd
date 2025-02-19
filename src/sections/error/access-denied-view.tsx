@@ -9,22 +9,22 @@ import { SimpleLayout } from 'src/layouts/simple';
 
 // ----------------------------------------------------------------------
 
-export function NotFoundView() {
+export function AccessDeniedView() {
   return (
     <SimpleLayout content={{ compact: true }}>
       <Container>
         <Typography variant="h3" sx={{ mb: 2 }}>
-          Lo siento, página no encontrada!
+          Lo siento, no tienes acceso a esta página!
         </Typography>
 
         <Typography sx={{ color: 'text.secondary' }}>
-          Lo sentimos, no pudimos encontrar la página que estás buscando. ¿Quizás has escrito mal la URL?
-          Asegúrese de revisar su ortografía.
+          Lo sentimos, no puedes acceder a la página que estás buscando. Quizás ocurrió un error,
+          comunícate con tu administrador.
         </Typography>
 
         <Box
           component="img"
-          src="/assets/illustrations/illustration-404.svg"
+          src="/assets/illustrations/illustration-403.png"
           sx={{
             width: 320,
             height: 'auto',

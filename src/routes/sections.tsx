@@ -18,11 +18,15 @@ export const BlogPage = lazy(() => import('src/pages/blog'));
 export const UserPage = lazy(() => import('src/pages/user'));
 export const BankPage = lazy(() => import('src/pages/bank'));
 export const DocentePage = lazy(() => import('src/pages/docente'));
+export const HorariosPage = lazy(() => import('src/pages/horarios'));
+export const GradoSeccionPage = lazy(() => import('src/pages/gradoseccion'));
+export const AsignaciónDocente = lazy(() => import('src/pages/asignaciondocente'));
 export const StudentPage = lazy(() => import('src/pages/student'));
 export const LegalGuardianPage = lazy(() => import('src/pages/legalGuardian'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const ProductsPage = lazy(() => import('src/pages/products'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
+export const Page403 = lazy(() => import('src/pages/page-access-denied'));
 
 // ----------------------------------------------------------------------
 
@@ -53,7 +57,6 @@ export function Router() {
         setRole(decodedToken?.role);
       }
       setIsAuthenticated(!!token);
-      localStorage.clear();
     };
 
     checkAuth();
@@ -91,10 +94,7 @@ export function Router() {
         },
         { 
           path: 'payments', 
-          element: 
-            <ProtectedRoute>
-              <BankPage/>
-            </ProtectedRoute>
+          element: <h1>Por implementar</h1>
         },
         { 
           path: 'docentes', 
@@ -107,7 +107,7 @@ export function Router() {
         { path: 'registrations',
           element: 
             <ProtectedRoute>
-              <BankPage/>
+              <h1>Por implementar</h1>
             </ProtectedRoute>
         },
         { path: 'students',
@@ -122,6 +122,20 @@ export function Router() {
               <LegalGuardianPage/>
             </ProtectedRoute>
         },
+        { path: 'horarios', 
+          element: 
+          <HorariosPage/> 
+        },
+        { path: 'gradoseccion', 
+          element: 
+          <GradoSeccionPage/> 
+        },
+        { path: 'asignaciondocente',
+          element:
+          <ProtectedRoute allowedRoles={['Administrador']}>
+            <AsignaciónDocente/>
+          </ProtectedRoute>
+        }
       ],
     },
     {
@@ -135,6 +149,10 @@ export function Router() {
     {
       path: '404',
       element: <Page404 />,
+    },
+    {
+      path: '403',
+      element: <Page403 />,
     },
     {
       path: '*',

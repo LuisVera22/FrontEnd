@@ -49,6 +49,31 @@ export const navData = [
     title: 'Apoderados',
     path: '/legalguardians',
     icon: icon('ic-legalGuardian'),
+  },
+  {
+    title: 'Horarios',
+    path: '/horarios',
+    icon: icon('ic-horario'),
+  },
+  {
+    title: 'Grado y Sección',
+    path: '/gradoseccion',
+    icon: icon('ic-gradoSeccion'),
+  },
+  {
+    title: 'Asignación de docente',
+    path: '/asignaciondocente',
+    icon: icon('ic-asignacionDocente'),
+  },
+  {
+    title: 'Tipos de pago',
+    path: '/tipospago',
+    icon: icon('ic-tipoPago'),
+  },
+  {
+    title: 'Estados de pago',
+    path: '/estadospago',
+    icon: icon('ic-estadoPago'),
   } /* ,
   {
     title: 'Sign in',
