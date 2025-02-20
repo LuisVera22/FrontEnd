@@ -21,9 +21,9 @@ export const navData = [
     icon: icon('ic-bank'),
   },
   {
-    title: 'Cobros',
+    title: 'Pagos',
     path: '/payments',
-    icon: icon('ic-payments'),
+    icon: icon('ic-tipoPago'),
   },
   {
     title: 'Docentes',
@@ -67,12 +67,12 @@ export const navData = [
   },
   {
     title: 'Tipos de pago',
-    path: '/tipospago',
-    icon: icon('ic-tipoPago'),
+    path: '/paymentTypes',
+    icon: icon('ic-payments'),
   },
   {
     title: 'Estados de pago',
-    path: '/estadospago',
+    path: '/paymentStatus',
     icon: icon('ic-estadoPago'),
   } /* ,
   {

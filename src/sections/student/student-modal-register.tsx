@@ -1,275 +1,297 @@
-import {
-    Button,
-    Checkbox,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControl,
-    FormControlLabel,
-    InputLabel,
-    MenuItem,
-    Select,
-    TextField,
-} from '@mui/material';
-import React from 'react';
-  
-  interface StudentRegisterModalProps {
-    open: boolean;
-    onClose: () => void;
-    onSubmit: (studentData: any, isEdit: boolean) => void;
-    student: any;
-    setStudent: React.Dispatch<React.SetStateAction<any>>;
-    addLegalGuardian: boolean;
-    setAddLegalGuardian: React.Dispatch<React.SetStateAction<boolean>>;
-    newLegalGuardian: any;
-    setNewLegalGuardian: React.Dispatch<React.SetStateAction<any>>;
-  }
-  
-  export const StudentRegisterModal: React.FC<StudentRegisterModalProps> = ({
-    open,
-    onClose,
-    onSubmit,
-    student,
-    setStudent,
-    addLegalGuardian,
-    setAddLegalGuardian,
-    newLegalGuardian,
-    setNewLegalGuardian,
-  }) => {
-    const handleClose = () => {
-      // Limpiar el estado cuando se cierra el modal
-      setStudent({
-        code: '',
-        name: '',
-        lastName: '',
-        gender: '',
-        direction: '',
-        birthdate: '',
-        id: '',
-      });
-      setAddLegalGuardian(false);
-      setNewLegalGuardian({
-        identityDocument: '',
-        name: '',
-        lastName: '',
-        gender: '',
-        birthdate: '',
-        cellphoneNumber: '',
-        email: '',
-        direction: '',
-      });
-      onClose();
+import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormControlLabel, InputLabel, MenuItem, Select, SelectChangeEvent, TextField } from '@mui/material';
+import React, { useState } from 'react';
+import { ILegalGuardian } from 'src/interfaces/ILegalGuardian';
+import { IStudent } from 'src/interfaces/IStudent';
+import { appsettings } from 'src/settings/appsettings';
+
+// ----------------------------------------------------------------------
+const token = localStorage.getItem('token');
+if (!token) {
+  window.location.href = '/sign-in';
+}
+
+interface RegisterStudentModalProps {
+  open: boolean;
+  onClose: () => void;
+  onRegister: (student: IStudent) => void;
+}
+
+export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open, onClose, onRegister }) => {
+  const [student, setStudent] = useState<IStudent>({
+    id: 0,
+    code: '',
+    name: '',
+    lastName: '',
+    gender: '',
+    direction: '',
+    birthdate: '',
+    legalGuardianId: 0,
+    legalGuardian: null,
+  });
+
+  const [registerGuardian, setRegisterGuardian] = useState(false);
+  const [legalGuardian, setLegalGuardian] = useState<ILegalGuardian>({
+    id: 0,
+    identityDocument: '',
+    name: '',
+    lastName: '',
+    gender: '',
+    birthdate: '',
+    cellphoneNumber: '',
+    email: '',
+    direction: '',
+  });
+
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setStudent((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleGuardianChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setLegalGuardian((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleGenderChange = (e: SelectChangeEvent<string>, isGuardian: boolean) => {
+    const value = e.target.value;
+    if (isGuardian) {
+      setLegalGuardian((prev) => ({
+        ...prev,
+        gender: value,
+      }));
+    } else {
+      setStudent((prev) => ({
+        ...prev,
+        gender: value,
+      }));
+    }
+  };
+
+  const handleClose = () => {
+    setStudent({
+      id: 0,
+      code: '',
+      name: '',
+      lastName: '',
+      gender: '',
+      direction: '',
+      birthdate: '',
+      legalGuardianId: 0,
+      legalGuardian: null,
+    });
+    setLegalGuardian({
+      id: 0,
+      identityDocument: '',
+      name: '',
+      lastName: '',
+      gender: '',
+      birthdate: '',
+      cellphoneNumber: '',
+      email: '',
+      direction: '',
+    });
+    setRegisterGuardian(false);
+    setErrorMessage('');
+    onClose();
+  };
+
+  const handleRegister = async () => {
+    const studentData = {
+      ...student,
+      legalGuardian: registerGuardian ? legalGuardian : null,
     };
-  
-    const handleSubmit = async () => {
-      // Crear objeto de datos del estudiante
-      const studentData = {
-        code: student.code,
-        name: student.name,
-        lastName: student.lastName,
-        gender: student.gender,
-        direction: student.direction,
-        birthdate: student.birthdate,
-        legalGuardianId: addLegalGuardian ? undefined : undefined,  // Si no se agrega apoderado, no se envía `legalGuardianId`
-        legalGuardian: addLegalGuardian ? newLegalGuardian : undefined,  // Si se agrega apoderado, enviar sus datos
-      };
-  
-      // Llamar la función `onSubmit`, enviando los datos y el flag de `isEdit`
-      onSubmit(studentData, student.id !== ''); // Si el `id` del estudiante no es vacío, es edición (isEdit=true)
-    };
-  
-    return (
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>{student.id === '' ? 'Registrar Estudiante' : 'Editar Estudiante'}</DialogTitle>
-        <DialogContent
-          sx={{
-            maxHeight: '60vh',
-            overflowY: 'auto',
+
+    try {
+      const response = await fetch(`${appsettings.apiUrl}Student`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(studentData),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        onRegister(data);
+        handleClose();
+      } else {
+        const errorData = await response.json();
+        setErrorMessage(errorData.message || 'Error al registrar el estudiante');
+      }
+    } catch (error) {
+      console.error('Error en la solicitud:', error);
+      setErrorMessage('Hubo un problema con la conexión. Intenta nuevamente.');
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>Registrar Estudiante</DialogTitle>
+      <DialogContent>
+        {errorMessage && <div style={{ color: 'red', marginBottom: 10 }}>{errorMessage}</div>}
+        
+        <TextField
+          label="Documento de Identidad"
+          name="code"
+          value={student.code}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Nombre"
+          name="name"
+          value={student.name}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Apellido"
+          name="lastName"
+          value={student.lastName}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Dirección"
+          name="direction"
+          value={student.direction}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Fecha de Nacimiento"
+          name="birthdate"
+          type="date"
+          value={student.birthdate}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          InputLabelProps={{
+            shrink: true,
           }}
-        >
-          <TextField
-            label="DNI"
-            value={student.code}
-            onChange={(e) => setStudent({ ...student, code: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Nombre"
-            value={student.name}
-            onChange={(e) => setStudent({ ...student, name: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Apellido"
-            value={student.lastName}
-            onChange={(e) => setStudent({ ...student, lastName: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <FormControl fullWidth margin="normal">
-            <InputLabel>Género</InputLabel>
-            <Select
-              value={student.gender}
-              onChange={(e) => setStudent({ ...student, gender: e.target.value })}
-            >
-              <MenuItem value="varon">Varón</MenuItem>
-              <MenuItem value="mujer">Mujer</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            label="Dirección"
-            value={student.direction}
-            onChange={(e) => setStudent({ ...student, direction: e.target.value })}
-            fullWidth
-            margin="normal"
-          />
-          <TextField
-            label="Fecha de nacimiento"
-            type="date"
-            value={student.birthdate ? student.birthdate.split('T')[0] : ''}
-            onChange={(e) => setStudent({ ...student, birthdate: e.target.value })}
-            fullWidth
-            margin="normal"
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
-          {student.id === '' ? (
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={addLegalGuardian}
-                  onChange={(e) => setAddLegalGuardian(e.target.checked)}
-                  name="addLegalGuardian"
-                />
-              }
-              label="Agregar apoderado"
-            />
-          ) : null}
-          {addLegalGuardian && (
-            <>
-              <TextField
-                label="DNI del apoderado"
-                value={newLegalGuardian.identityDocument}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    identityDocument: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Nombre del apoderado"
-                value={newLegalGuardian.name}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    name: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Apellido del apoderado"
-                value={newLegalGuardian.lastName}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    lastName: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <FormControl fullWidth margin="normal">
-                <InputLabel>Género del apoderado</InputLabel>
-                <Select
-                  value={newLegalGuardian.gender}
-                  onChange={(e) =>
-                    setNewLegalGuardian({
-                      ...newLegalGuardian,
-                      gender: e.target.value,
-                    })
-                  }
-                >
-                  <MenuItem value="varon">Varón</MenuItem>
-                  <MenuItem value="mujer">Mujer</MenuItem>
-                </Select>
-              </FormControl>
-              <TextField
-                label="Fecha de nacimiento del apoderado"
-                type="date"
-                value={newLegalGuardian.birthdate}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    birthdate: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-              <TextField
-                label="Número de celular del apoderado"
-                value={newLegalGuardian.cellphoneNumber}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    cellphoneNumber: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Correo electrónico del apoderado"
-                value={newLegalGuardian.email}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    email: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-              <TextField
-                label="Dirección del apoderado"
-                value={newLegalGuardian.direction}
-                onChange={(e) =>
-                  setNewLegalGuardian({
-                    ...newLegalGuardian,
-                    direction: e.target.value,
-                  })
-                }
-                fullWidth
-                margin="normal"
-              />
-            </>
-          )}
-        </DialogContent>
-  
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            color="primary"
-            variant="contained"
+        />
+
+        <FormControl fullWidth margin="normal">
+          <InputLabel>Género</InputLabel>
+          <Select
+            name="gender"
+            value={student.gender}
+            onChange={(e) => handleGenderChange(e, false)}
+            label="Género"
           >
-            {student.id === '' ? 'Registrar' : 'Editar'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    );
-  };  
+            <MenuItem value="varon">Varón</MenuItem>
+            <MenuItem value="mujer">Mujer</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControlLabel
+          control={
+            <Checkbox
+              checked={registerGuardian}
+              onChange={(e) => setRegisterGuardian(e.target.checked)}
+              color="primary"
+            />
+          }
+          label="Registrar Apoderado"
+        />
+        {registerGuardian && (
+          <>
+            <TextField
+              label="Documento de Identidad del Apoderado"
+              name="identityDocument"
+              value={legalGuardian.identityDocument}
+              onChange={handleGuardianChange}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Nombre del Apoderado"
+              name="name"
+              value={legalGuardian.name}
+              onChange={handleGuardianChange}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Apellido del Apoderado"
+              name="lastName"
+              value={legalGuardian.lastName}
+              onChange={handleGuardianChange}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Teléfono del Apoderado"
+              name="cellphoneNumber"
+              value={legalGuardian.cellphoneNumber}
+              onChange={handleGuardianChange}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Correo del Apoderado"
+              name="email"
+              value={legalGuardian.email}
+              onChange={handleGuardianChange}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Dirección del Apoderado"
+              name="direction"
+              value={legalGuardian.direction}
+              onChange={handleGuardianChange}
+              fullWidth
+              margin="normal"
+            />
+            <TextField
+              label="Fecha de Nacimiento del Apoderado"
+              type="date"
+              name="birthdate"
+              value={legalGuardian.birthdate}
+              onChange={handleGuardianChange}
+              fullWidth
+              margin="normal"
+              InputLabelProps={{
+                shrink: true,
+              }}
+            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Género del Apoderado</InputLabel>
+              <Select
+                name="gender"
+                value={legalGuardian.gender}
+                onChange={(e) => handleGenderChange(e, true)}
+                label="Género del Apoderado"
+              >
+                <MenuItem value="varon">Varón</MenuItem>
+                <MenuItem value="mujer">Mujer</MenuItem>
+              </Select>
+            </FormControl>
+          </>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} color="primary">
+          Cancelar
+        </Button>
+        <Button onClick={handleRegister} color="primary">
+          Registrar
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};

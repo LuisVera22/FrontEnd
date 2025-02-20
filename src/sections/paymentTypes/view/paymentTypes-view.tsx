@@ -9,115 +9,86 @@ import TableContainer from '@mui/material/TableContainer';
 import TablePagination from '@mui/material/TablePagination';
 import Typography from '@mui/material/Typography';
 
-import { DashboardContent } from 'src/layouts/dashboard';
-
-import { IStudent } from 'src/interfaces/IStudent';
-
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
 import { appsettings } from 'src/settings/appsettings';
+
+import { _users } from 'src/_mock';
+import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
-import { StudentTableHead } from '../student-table-head';
-import { StudentTableRow } from '../student-table-row';
-import { StudentTableToolbar } from '../student-table-toolbar';
+import { PaymentTypesTableHead } from '../paymentTypes-table-head';
+import { PaymentTypesTableRow } from '../paymentTypes-table-row';
+import { PaymentTypesTableToolbar } from '../paymentTypes-table-toolbar';
 import { TableEmptyRows } from '../table-empty-rows';
 import { TableNoData } from '../table-no-data';
 import { applyFilter, emptyRows, getComparator } from '../utils';
 
-import { RegisterStudentModal } from '../student-modal-register';
-import type { StudentProps } from '../student-table-row';
+import type { PaymentTypesProps } from '../paymentTypes-table-row';
 
 // ----------------------------------------------------------------------
 const token = localStorage.getItem('token');
-if (!token) {
-  window.location.href = '/sign-in';
-}
-// ----------------------------------------------------------------------
 
-export function StudentView() {
+export function PaymentTypesView() {
   const table = useTable();
-  const [openModal, setOpenModal] = useState(false);
-  const [students, setStudents] = useState<IStudent[]>([]);
+  const [paymentTypes, setPaymentTypes] = useState<PaymentTypesProps[]>([]);
   const [filterName, setFilterName] = useState('');
 
-  const dataFiltered: StudentProps[] = applyFilter({
-    inputData: students,
+  const dataFiltered: PaymentTypesProps[] = applyFilter({
+    inputData: paymentTypes,
     comparator: getComparator(table.order, table.orderBy),
     filterName,
   });
 
   const notFound = !dataFiltered.length;
 
-  // Obtener estudiantes
-  const _students = async () => {
-          if (!token){
-              console.error('No se encontró el token de autenticación');
-              return;
-          }
-          try {
-              const response = await fetch(`${appsettings.apiUrl}Student`, { 
-                  method: 'GET',
-                  headers: { 
-                      'Content-Type': 'application/json',
-                      'Authorization': `Bearer ${token}`,
-                  },
-              });
-              if (response.ok){
-                  const data = await response.json();
-                  setStudents(data);
-              } else {
-                  console.error('Error al obtener los estudiantes:', response);
-              }
-          } catch (error) {
-              console.error('Error en la petición:', error);
-          }
-    };
-  
+
+  // Obtener Tipos de Pago
+  const _paymentTypes = async () => {
+    if (!token){
+      console.error('No se encontró el token de autenticación');
+        return;
+    } 
+    try {
+      const response = await fetch(`${appsettings.apiUrl}PaymentType`, { 
+        method: 'GET',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentTypes(data);
+      } else {
+        console.error('Error al obtener los bancos:', response.status);
+      }
+    } catch (error) {
+      console.error('Error en la petición:', error);
+    }
+  };
+
   useEffect(() => {
-    _students();
+    _paymentTypes();
   }, []);
-
-  // Registro de estudiantes
-  const handleOpenModal = () => {
-    setOpenModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setOpenModal(false);
-  };
-
-  const handleRegisterStudent = (student: IStudent) => {
-    setStudents((prev) => [...prev, student]);
-  };
 
   return (
     <DashboardContent>
       <Box display="flex" alignItems="center" mb={5}>
         <Typography variant="h4" flexGrow={1}>
-          Estudiantes
+          Tipos de Pago
         </Typography>
         <Button
           variant="contained"
           color="inherit"
           startIcon={<Iconify icon="mingcute:add-line" />}
-          onClick={handleOpenModal}
         >
-          Registrar Estudiante
+          Agregar Tipo de Pago
         </Button>
       </Box>
 
-      <RegisterStudentModal
-        open={openModal}
-        onClose={handleCloseModal}
-        onRegister={handleRegisterStudent}
-      />
-
       <Card>
-        <StudentTableToolbar
+        <PaymentTypesTableToolbar
           numSelected={table.selected.length}
           filterName={filterName}
           onFilterName={(event: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,24 +100,21 @@ export function StudentView() {
         <Scrollbar>
           <TableContainer sx={{ overflow: 'unset' }}>
             <Table sx={{ minWidth: 800 }}>
-              <StudentTableHead
+              <PaymentTypesTableHead
                 order={table.order}
                 orderBy={table.orderBy}
-                rowCount={students.length}
+                rowCount={_users.length}
                 numSelected={table.selected.length}
                 onSort={table.onSort}
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    students.map((studentSelected) => String(studentSelected.id))
+                    _users.map((user) => user.id)
                   )
                 }
                 headLabel={[
-                  { id: 'code', label: 'DNI' },
-                  { id: 'name', label: 'Nombre' },
-                  { id: 'lastName', label: 'Apellido' },
-                  { id: 'direcction', label: 'Dirección'},
-                  { id: 'birthdate', label: 'Nacimiento' },
+                  { id: 'description', label: 'Descripción' },
+                  { id: 'status', label: 'Estado' },
                   { id: '' },
                 ]}
               />
@@ -157,20 +125,17 @@ export function StudentView() {
                     table.page * table.rowsPerPage + table.rowsPerPage
                   )
                   .map((row) => (
-                    <StudentTableRow
+                    <PaymentTypesTableRow
                       key={row.id}
                       row={row}
                       selected={table.selected.includes(String(row.id))}
                       onSelectRow={() => table.onSelectRow(String(row.id))}
-                      onEdit={() => (row)}
-                      onDelete={(id) => (id)}
-                      assingLegalGuardian={(id) => console.log(id)}
                     />
                   ))}
 
                 <TableEmptyRows
                   height={68}
-                  emptyRows={emptyRows(table.page, table.rowsPerPage, students.length)}
+                  emptyRows={emptyRows(table.page, table.rowsPerPage, _users.length)}
                 />
 
                 {notFound && <TableNoData searchQuery={filterName} />}
@@ -182,7 +147,7 @@ export function StudentView() {
         <TablePagination
           component="div"
           page={table.page}
-          count={students.length}
+          count={_users.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
@@ -191,7 +156,6 @@ export function StudentView() {
           labelDisplayedRows={({ from, to, count }) => `Página ${from}-${to} de ${count}`}
         />
       </Card>
-      <ToastContainer />
     </DashboardContent>
   );
 }
@@ -200,7 +164,7 @@ export function StudentView() {
 
 export function useTable() {
   const [page, setPage] = useState(0);
-  const [orderBy, setOrderBy] = useState('name');
+  const [orderBy, setOrderBy] = useState('description');
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState<string[]>([]);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');

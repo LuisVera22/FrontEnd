@@ -23,6 +23,8 @@ export const GradoSeccionPage = lazy(() => import('src/pages/gradoseccion'));
 export const AsignaciónDocente = lazy(() => import('src/pages/asignaciondocente'));
 export const StudentPage = lazy(() => import('src/pages/student'));
 export const LegalGuardianPage = lazy(() => import('src/pages/legalGuardian'));
+export const PaymentTypesPage = lazy(() => import('src/pages/paymentTypes'));
+export const PaymentStatusPage = lazy(() => import('src/pages/paymentStatus'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const ProductsPage = lazy(() => import('src/pages/products'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
@@ -134,6 +136,18 @@ export function Router() {
           element:
           <ProtectedRoute allowedRoles={['Administrador']}>
             <AsignaciónDocente/>
+          </ProtectedRoute>
+        },
+        { path: 'paymentTypes',
+          element:
+          <ProtectedRoute>
+            <PaymentTypesPage/>
+          </ProtectedRoute>
+        },
+        { path: 'paymentStatus',
+          element:
+          <ProtectedRoute>
+            <PaymentStatusPage/>
           </ProtectedRoute>
         }
       ],

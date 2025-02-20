@@ -10,39 +10,23 @@ import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
 import { Iconify } from 'src/components/iconify';
-import { LegalGuardianProps } from '../legalGuardian/legalGuardian-table-row';
+import { Label } from 'src/components/label';
 
 // ----------------------------------------------------------------------
 
-export type StudentProps = {
+export type PaymentStatusProps = {
   id: number;
-  code: string;
-  name: string;
-  lastName: string;
-  gender: string;
-  direction: string;
-  birthdate: string;
-  legalGuardianId: number;
-  legalGuardian: LegalGuardianProps | null;
+  description: string;
+  status: boolean;
 };
 
-type StudentTableRowProps = {
-  row: StudentProps;
+type PaymentStatusTableRowProps = {
+  row: PaymentStatusProps;
   selected: boolean;
   onSelectRow: () => void;
-  onEdit: (student: StudentProps) => void;
-  onDelete: (id: number) => void;
-  assingLegalGuardian: (id: number) => void;
 };
 
-export function StudentTableRow({ 
-  row,
-  selected,
-  onSelectRow,
-  onEdit,
-  onDelete,
-  assingLegalGuardian,
-}: StudentTableRowProps) {
+export function PaymentStatusTableRow({ row, selected, onSelectRow }: PaymentStatusTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -53,9 +37,6 @@ export function StudentTableRow({
     setOpenPopover(null);
   }, []);
 
-  const date = new Date(row.birthdate);
-  const formattedDate = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-
   return (
     <>
       <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
@@ -63,19 +44,17 @@ export function StudentTableRow({
           <Checkbox disableRipple checked={selected} onChange={onSelectRow} />
         </TableCell>
 
-        <TableCell>{row.code}</TableCell>
-
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
-            {row.name}
+            {row.description}
           </Box>
         </TableCell>
 
-        <TableCell>{row.lastName}</TableCell>
-
-        <TableCell>{row.direction}</TableCell>
-
-        <TableCell>{formattedDate}</TableCell>
+        <TableCell>
+          <Label color={row.status ? 'success' : 'error'}>
+            {row.status ? 'Activo' : 'Inactivo'}
+          </Label>
+        </TableCell>
 
         <TableCell align="right">
           <IconButton onClick={handleOpenPopover}>
@@ -107,22 +86,15 @@ export function StudentTableRow({
             },
           }}
         >
-          <MenuItem onClick={() => onEdit(row)}>
+          <MenuItem onClick={handleClosePopover}>
             <Iconify icon="solar:pen-bold" />
             Editar
           </MenuItem>
 
-          <MenuItem onClick={() => onDelete(row.id)} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
             Eliminar
           </MenuItem>
-
-          {row.legalGuardianId === null ? (
-            <MenuItem onClick={() => assingLegalGuardian(row.id)} sx={{color: 'warning.main'}}>
-              <Iconify icon="mdi:account" />
-              Asignar Ap.
-            </MenuItem>
-          ) :  null}
         </MenuList>
       </Popover>
     </>
