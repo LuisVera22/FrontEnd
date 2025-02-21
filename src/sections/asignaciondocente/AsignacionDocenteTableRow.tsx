@@ -16,6 +16,8 @@ import { IAsignacionDocente } from 'src/interfaces/IAsignacionDocente';
 import { IGradoSeccion } from 'src/interfaces/IGradoSeccion';
 import { IDocente } from 'src/interfaces/IDocente';
 import { IHorarios } from 'src/interfaces/IHorarios';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@mui/material';
 
 // ----------------------------------------------------------------------
 
@@ -31,7 +33,7 @@ type AsignacionDocenteTableRowProps = {
   selected: boolean;
   onSelectRow: () => void;
   onDelete: (id: number) => void;
-  onEdit: (AsignacionDocente : IAsignacionDocente) => void;
+  onEdit: (asignacionDocente: IAsignacionDocente) => void;
 };
 
 export function AsignacionDocenteTableRow({
@@ -50,7 +52,7 @@ export function AsignacionDocenteTableRow({
   const handleClosePopover = useCallback(() => {
     setOpenPopover(null);
   }, []);
-
+const navigate = useNavigate();
   return (
     <>
       <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
@@ -60,21 +62,26 @@ export function AsignacionDocenteTableRow({
 
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
-            {row.docente.nombre}
+            {row.docente?.nombre || 'Sin docente'}
           </Box>
         </TableCell>
 
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
-            {row.gradoSeccion.nombre}
+            {row.gradoSeccion?.nombre || 'Sin grado/sección'}
           </Box>
         </TableCell>
-        <TableCell component="th" scope="row">
-         <Box gap={2} display="flex" alignItems="center">
-          {row.horarios.map((horario) => horario.id).join(', ')}
-         </Box>
-        </TableCell>
 
+        {/* Agregar botón para ver horarios */}
+      <TableCell>
+        <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={() => navigate(`/horarios/porGradoSeccion/${row.gradoSeccion.id}`)}
+        >
+          Ver Horarios
+        </Button>
+      </TableCell>
 
         <TableCell align="right">
           <IconButton onClick={handleOpenPopover}>

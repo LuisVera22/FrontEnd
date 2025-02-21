@@ -103,36 +103,77 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
     onClose();
   };
 
-  const handleRegister = async () => {
-    const studentData = {
-      ...student,
-      legalGuardian: registerGuardian ? legalGuardian : null,
-    };
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleRegister = async () => {
+    const formData = new FormData();
+  
+    // Agregar campos del estudiante
+    formData.append("code", student.code);
+    formData.append("name", student.name);
+    formData.append("lastName", student.lastName);
+    formData.append("gender", student.gender);
+    formData.append("direction", student.direction);
+    formData.append("birthdate", student.birthdate);
+    formData.append("legalGuardianId", student.legalGuardianId.toString());
+  
+    // Agregar datos del apoderado si corresponde
+    if (registerGuardian) {
+      formData.append("legalGuardian[name]", legalGuardian.name);
+      formData.append("legalGuardian[lastName]", legalGuardian.lastName);
+    }
+  
+    // Agregar la imagen si se seleccionó
+    if (selectedFile) {
+      formData.append("imagen", selectedFile);
+    }
+  
     try {
-      const response = await fetch(`${appsettings.apiUrl}LegalGuardian/{findDNI}`, {
-        method: 'GET',
+      // Depuración: Mostrar la URL a la que se envía y las entradas del FormData
+      Array.from(formData.entries()).forEach(([key, value]) => {
+        console.log(`${key}:`, value);
+      });
+  
+      const response = await fetch(`${appsettings.apiUrl}Student`, {
+        method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify(studentData),
+        body: formData,
       });
-
+  
       if (response.ok) {
         const data = await response.json();
         onRegister(data);
         handleClose();
       } else {
-        const errorData = await response.json();
-        setErrorMessage(errorData.message || 'Error al registrar el estudiante');
+        // Lee el cuerpo de la respuesta una sola vez
+        const responseBody = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(responseBody);
+        } catch (jsonError) {
+          errorData = responseBody;
+        }
+        setErrorMessage(
+          typeof errorData === 'object' && errorData.message
+            ? errorData.message
+            : errorData || 'Error al registrar el estudiante'
+        );
       }
     } catch (error) {
       console.error('Error en la solicitud:', error);
       setErrorMessage('Hubo un problema con la conexión. Intenta nuevamente.');
     }
   };
-
+  
+  
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>Registrar Estudiante</DialogTitle>
@@ -184,6 +225,7 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
           }}
         />
 
+
         <FormControl fullWidth margin="normal">
           <InputLabel>Género</InputLabel>
           <Select
@@ -196,6 +238,10 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
             <MenuItem value="mujer">Mujer</MenuItem>
           </Select>
         </FormControl>
+        <div style={{ marginTop: '16px' }}>
+  <InputLabel>Subir Imagen</InputLabel>
+  <input type="file" accept="image/*" onChange={handleFileChange} />
+</div>
 
         <FormControlLabel
           control={

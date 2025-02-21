@@ -66,7 +66,7 @@ const _docentes = async () => {
       const data = await response.json();
       setDocentes(data);
     } else {
-      console.error('Error al obtener los bancos:', response.status);
+      console.error('Error al obtener los docentes:', response.status);
     }
   } catch (error) {
     console.error('Error en la petición:', error);

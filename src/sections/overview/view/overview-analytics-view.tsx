@@ -14,7 +14,6 @@ import { AnalyticsTasks } from '../analytics-tasks';
 import { AnalyticsWidgetSummary } from '../analytics-widget-summary';
 
 // ----------------------------------------------------------------------
-const token = localStorage.getItem('token');
 
 const givenName = localStorage.getItem('givenName');
 

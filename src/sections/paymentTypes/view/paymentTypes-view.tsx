@@ -11,12 +11,11 @@ import Typography from '@mui/material/Typography';
 
 import { appsettings } from 'src/settings/appsettings';
 
+import { _users } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
-
-import { Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 
 import { PaymentTypesTableHead } from '../paymentTypes-table-head';
 import { PaymentTypesTableRow } from '../paymentTypes-table-row';
@@ -34,10 +33,6 @@ export function PaymentTypesView() {
   const table = useTable();
   const [paymentTypes, setPaymentTypes] = useState<PaymentTypesProps[]>([]);
   const [filterName, setFilterName] = useState('');
-  const [openModal, setOpenModal] = useState(false);
-  const [modalMessage, setModalMessage] = useState('');
-  const [modalType, setModalType] = useState<'success' | 'error' | 'info' | 'confirmation'>('info');
-  const [itemToDelete, setItemToDelete] = useState<number | null>(null);
 
   const dataFiltered: PaymentTypesProps[] = applyFilter({
     inputData: paymentTypes,
@@ -47,15 +42,6 @@ export function PaymentTypesView() {
 
   const notFound = !dataFiltered.length;
 
-  const openDialog = (message: string, type: 'success' | 'error' | 'info' | 'confirmation') => {
-    setModalMessage(message);
-    setModalType(type);
-    setOpenModal(true);
-  };
-  
-  const closeDialog = () => {
-    setOpenModal(false);
-  };
 
   // Obtener Tipos de Pago
   const _paymentTypes = async () => {
@@ -85,101 +71,6 @@ export function PaymentTypesView() {
   useEffect(() => {
     _paymentTypes();
   }, []);
-
-  // Eliminar Tipo de Pago
-  const handleDeleteClick = (id: number) => {
-    setItemToDelete(id); 
-    openDialog('¿Estás seguro de que deseas eliminar este tipo de pago?', 'confirmation');
-  };
-  
-  const _deletePaymentType = async (id: number) => {
-    if (!token) {
-      openDialog('Error: No se encontró el token de autenticación', 'error');
-      return;
-    }
-  
-    try {
-      const response = await fetch(`${appsettings.apiUrl}PaymentType/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-  
-      if (response.ok) {
-        setPaymentTypes((prev) => prev.filter((item) => item.id !== id));
-        openDialog('Tipo de pago eliminado exitosamente', 'success');
-      } else {
-        openDialog('Error al eliminar el tipo de pago', 'error');
-      }
-    } catch (error) {
-      openDialog('Error en la petición', 'error');
-    }
-  }; 
-
-  // Desactivar y restaurar
-  const handleDesactivate = (id: number) => {
-    openDialog('¿Estás seguro de que deseas desactivar este tipo de pago?', 'confirmation');
-  };
-  
-  const _desactivatePaymentType = async (id: number) => {
-    if (!token) {
-      openDialog('Error: No se encontró el token de autenticación', 'error');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${appsettings.apiUrl}PaymentType/desactivate/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        setPaymentTypes((prev) => prev.map((item) => (item.id === id ? { ...item, status: false } : item)));
-        openDialog('Tipo de pago desactivado exitosamente', 'success');
-        _paymentTypes()
-      } else {
-        openDialog('Error al desactivar el tipo de pago', 'error');
-      }
-    } catch (error) {
-      openDialog('Error en la petición', 'error');
-    }
-  };
-
-  const handleReinstate = (id: number) => {
-    openDialog('¿Estás seguro de que deseas restaurar este tipo de pago?', 'confirmation');
-  };
-
-  const _reinstatePaymentType = async (id: number) => {
-    if (!token) {
-      openDialog('Error: No se encontró el token de autenticación', 'error');
-      return;
-    }
-
-    try {
-      const response = await fetch(`${appsettings.apiUrl}PaymentType/reinstate/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        setPaymentTypes((prev) => prev.map((item) => (item.id === id ? { ...item, status: true } : item)));
-        openDialog('Tipo de pago restaurado exitosamente', 'success');
-        _paymentTypes();
-      } else {
-        openDialog('Error al restaurar el tipo de pago', 'error');
-      }
-    } catch (error) {
-      openDialog('Error en la petición', 'error');
-    }
-  };
 
   return (
     <DashboardContent>
@@ -212,13 +103,13 @@ export function PaymentTypesView() {
               <PaymentTypesTableHead
                 order={table.order}
                 orderBy={table.orderBy}
-                rowCount={paymentTypes.length}
+                rowCount={_users.length}
                 numSelected={table.selected.length}
                 onSort={table.onSort}
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    paymentTypes.map((paymentTypesEnter) => String(paymentTypesEnter.id))
+                    _users.map((user) => user.id)
                   )
                 }
                 headLabel={[
@@ -239,16 +130,12 @@ export function PaymentTypesView() {
                       row={row}
                       selected={table.selected.includes(String(row.id))}
                       onSelectRow={() => table.onSelectRow(String(row.id))}
-                      onDelete={() => handleDeleteClick(row.id)}
-                      onDesactivate={() => handleDesactivate(row.id)} 
-                      onReinstate={() => handleReinstate(row.id)}
-                      onEdit={() => (row)}
                     />
                   ))}
 
                 <TableEmptyRows
                   height={68}
-                  emptyRows={emptyRows(table.page, table.rowsPerPage, paymentTypes.length)}
+                  emptyRows={emptyRows(table.page, table.rowsPerPage, _users.length)}
                 />
 
                 {notFound && <TableNoData searchQuery={filterName} />}
@@ -260,7 +147,7 @@ export function PaymentTypesView() {
         <TablePagination
           component="div"
           page={table.page}
-          count={paymentTypes.length}
+          count={_users.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}
@@ -269,44 +156,6 @@ export function PaymentTypesView() {
           labelDisplayedRows={({ from, to, count }) => `Página ${from}-${to} de ${count}`}
         />
       </Card>
-      
-      <Dialog open={openModal} onClose={closeDialog}>
-        <DialogTitle>{modalType === 'confirmation' ? 'Confirmación' : 'Notificación'}</DialogTitle>
-        <DialogContent>
-          <div>
-            {modalType === 'confirmation' ? (
-              <p>{modalMessage}</p>
-            ) : (
-              <p>{modalMessage}</p>
-            )}
-          </div>
-        </DialogContent>
-        <DialogActions>
-          {modalType === 'confirmation' ? (
-            <>
-              <Button onClick={closeDialog} color="primary">
-                Cancelar
-              </Button>
-              <Button
-                onClick={() => {
-                  if (itemToDelete) {
-                    _deletePaymentType(itemToDelete);
-                  }
-                  closeDialog();
-                }}
-                color="error"
-              >
-                Eliminar
-              </Button>
-            </>
-          ) : (
-            <Button onClick={closeDialog} color="primary">
-              Aceptar
-            </Button>
-          )}
-        </DialogActions>
-
-      </Dialog>
     </DashboardContent>
   );
 }

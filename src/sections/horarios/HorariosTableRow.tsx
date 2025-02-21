@@ -21,8 +21,7 @@ export type HorariosProps = {
  horaInicio: string;
  horaFin: string;
  diaSemana: string;
- gradoSeccionId: number;
- gradoSeccion?: IGradoSeccion; 
+ gradoSeccion: IGradoSeccion; 
 };
 
 type HorariosTableRowProps = {
@@ -76,8 +75,8 @@ export function HorariosTableRow({
         </TableCell>
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
-            {row.gradoSeccionId}
-          </Box>
+          {row.gradoSeccion?.nombre || 'Sin grado/sección'}      
+            </Box>
         </TableCell>
 
         <TableCell align="right">

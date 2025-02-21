@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { Autocomplete, TextField } from '@mui/material';
+import { Autocomplete, List, ListItem, ListItemText, TextField } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -40,20 +40,21 @@ import { TableNoData } from '../table-no-data';
 
 import type { AsignacionDocenteProps } from '../AsignacionDocenteTableRow';
 // ----------------------------------------------------------------------
+const token = localStorage.getItem('token');
 
 export function AsignacionDocenteView() {
-    const [asignacionDocente, setAsignacionDocente] = useState<IAsignacionDocente[]>([]);
-    const [openDialog, setOpenDialog] = useState(false);
-    const [open, setOpen] = useState(false);
-    const [docentes, setDocentes] = useState<IDocente[]>([]);
-    const [selectedDocente, setSelectedDocente] = useState<IDocente | null>(null);
-    const [selectedGradoSeccion, setSelectedGradoSeccion] = useState<IGradoSeccion | null>(null);
-    const [gradoseccion, setGradoSeccion] = useState<IGradoSeccion[]>([]);
-    const [selectedHorarios, setSelectedHorarios] = useState<IHorarios[]>([]);
-    const [horarios, setHorarios] = useState<IHorarios[]>([]);
-    const [asignacionToDelete, setAsignacionToDelete] = useState<number | null>(null);
-    const [openEdit, setOpenEdit] = useState(false);
-    const [asignacionToEdit, setAsignacionToEdit] = useState<number | null>(null);
+  const [asignacionDocente, setAsignacionDocente] = useState<IAsignacionDocente[]>([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [docentes, setDocentes] = useState<IDocente[]>([]);
+  const [selectedDocente, setSelectedDocente] = useState<IDocente | null>(null);
+  const [selectedGradoSeccion, setSelectedGradoSeccion] = useState<IGradoSeccion | null>(null);
+  const [gradoseccion, setGradoSeccion] = useState<IGradoSeccion[]>([]);
+  const [selectedHorarios, setSelectedHorarios] = useState<IHorarios[]>([]);
+  const [horarios, setHorarios] = useState<IHorarios[]>([]);
+  const [asignacionToDelete, setAsignacionToDelete] = useState<number | null>(null);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [asignacionToEdit, setAsignacionToEdit] = useState<number | null>(null);
   
     const _asignacionDocente = async () => {
       try {
@@ -69,31 +70,92 @@ export function AsignacionDocenteView() {
       }
     };
   
-    // Ejecuta la consulta cuando el componente se monta
-    useEffect(() => {
+   
+
+    const _obtenerGradoSeccion = async () => {
+      try {
+        const response = await fetch(`${appsettings.apiUrl}GradoSeccion`, { method: 'GET' });
+        if (response.ok) {
+          const data: IGradoSeccion[] = await response.json();
+          setGradoSeccion(data);
+          console.log("Grados y secciones recibidos:", data);
+        } else {
+          console.error("Error al obtener grados y secciones:", response.status);
+        }
+      } catch (error) {
+        console.error("Error en la petición:", error);
+      }
+    };
+    const _horarios = async () => {
+      try {
+        const response = await fetch(`${appsettings.apiUrl}Horario`, { method: 'GET' });
+        if (response.ok) {
+          const data = await response.json();
+          setHorarios(data);
+        } else {
+          console.error('Error al obtener los Horarios:', response.status);
+        }
+      } catch (error) {
+        console.error('Error en la petición:', error);
+      }
+    };
+    
+
+    const _docentes = async () => {
+      try {
+        const response = await fetch(`${appsettings.apiUrl}Docente`, { 
+          method: 'GET', 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setDocentes(data);
+        } else {
+          console.error('Error al obtener los docentes:', response.status);
+        }
+      } catch (error) {
+        console.error('Error en la petición:', error);
+      }
+    };
+
+     // Ejecuta la consulta cuando el componente se monta
+     useEffect(() => {
       _asignacionDocente();
-    }, []);
-  
+      _obtenerGradoSeccion();
+      _docentes();
+      _horarios();
+    }, [setAsignacionDocente, setGradoSeccion, setDocentes]);
+
+
+
 
 const handleOpen = () => setOpen(true);
 const handleClose = () => setOpen(false);
 const handleSave = async () => {
-  try {
-    const nuevaAsignacion = {
-        docente: selectedDocente,           
-        gradoSeccion: selectedGradoSeccion, 
-        horarios: selectedHorarios          
-      };
+  if (!selectedDocente || !selectedGradoSeccion) {
+    alert("Por favor, seleccione un Docente y un Grado Sección.");
+    return;
+}
+const nuevaAsignacion = {
+  docenteId: selectedDocente.id,
+  gradoSeccionId: selectedGradoSeccion.id,
+  horarios: selectedHorarios.map(h => h.id) 
+};
+    try{
       const response = await fetch(`${appsettings.apiUrl}AsignacionDocente`, { 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(nuevaAsignacion),
       });
       if (response.ok) {
-        // Refresca la lista de asignaciones
-        _asignacionDocente();
+        const asignacionCreada: IAsignacionDocente = await response.json();
+
+        // Refresca la lista de asignacionespf
+        setAsignacionDocente(prev => [...prev, asignacionCreada]);
         setOpen(false);
-        // Reinicia los campos del formulario
         setSelectedDocente(null);
         setSelectedGradoSeccion(null);
         setSelectedHorarios([]);
@@ -106,6 +168,7 @@ const handleSave = async () => {
       console.error('Error en la petición:', error);
       toast.error('Error en la petición', { autoClose: 3000, position: "top-right" });
     }
+    
 };
 const handleCancel = () => {
   setOpen(false);
@@ -134,9 +197,9 @@ const confirmDelete = async () => {
       setOpenDialog(false);
       toast.success('Asignacion Docente eliminado exitosamente', { autoClose: 3000, position: "top-right" });
     } else {
-      console.error('Error al eliminar el banco:', response.status);
+      console.error('Error al eliminar el asignacion:', response.status);
       setOpenDialog(false);
-      toast.error('Error al eliminar el banco', { autoClose: 3000, position: "top-right" });
+      toast.error('Error al eliminar el asignacion', { autoClose: 3000, position: "top-right" });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
@@ -152,42 +215,50 @@ const handleCloseDialog = () => {
 
 
 const handleEdit = (asignacionDocenteEnter: IAsignacionDocente) => {
-    setSelectedDocente(asignacionDocenteEnter.docente);
-    setSelectedGradoSeccion(asignacionDocenteEnter.gradoSeccion);
-    setSelectedHorarios(asignacionDocenteEnter.horarios);
-    setAsignacionToEdit(asignacionDocenteEnter.id);
-    setOpenEdit(true);
+  setSelectedDocente(asignacionDocenteEnter.docente);
+  setSelectedGradoSeccion(asignacionDocenteEnter.gradoSeccion);
+  setSelectedHorarios(asignacionDocenteEnter.horarios);
+  setAsignacionToEdit(asignacionDocenteEnter.id);
+  setOpenEdit(true);
 };
 
 // Función para guardar la edición
 const handleSaveEdit = async () => {
-  if (!asignacionToEdit) return;
+  if (!asignacionToEdit || !selectedDocente || !selectedGradoSeccion) {
+    toast.error('Seleccione un docente y un grado sección', {
+      autoClose: 3000,
+      position: "top-right",
+    });
+    return;
+  }
 
   try {
     const nuevaAsignacion = {
-        docente: selectedDocente,           
-        gradoSeccion: selectedGradoSeccion, 
-        horarios: selectedHorarios          
-      };
+      id: asignacionToEdit,
+      docenteId: selectedDocente.id,  
+      gradoSeccionId: selectedGradoSeccion.id, 
+      horarios: selectedHorarios.map(h => h.id) 
+    };
 
     const response = await fetch(`${appsettings.apiUrl}AsignacionDocente/${asignacionToEdit}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({nuevaAsignacion}),
+      body: JSON.stringify(nuevaAsignacion), 
     });
+
     if (response.ok) {
-      _asignacionDocente();
+      _asignacionDocente(); 
       setOpenEdit(false);
       setSelectedDocente(null);
       setSelectedGradoSeccion(null);
       setSelectedHorarios([]);
-      toast.success('Asignacion actualizado exitosamente', {
+      toast.success('Asignación actualizada exitosamente', {
         autoClose: 3000,
         position: "top-right",
       });
     } else {
-      console.error('Error al editar el Asignacion:', response.status);
-      toast.error('Error al editar el Asignacion', {
+      console.error('Error al editar la asignación:', response.status);
+      toast.error('Error al editar la asignación', {
         autoClose: 3000,
         position: "top-right",
       });
@@ -253,24 +324,29 @@ const handleSaveEdit = async () => {
       Registrar Asignacion y Docente
     </Typography>
     <Autocomplete
-      options={docentes}
-      getOptionLabel={(option) => option.nombre} // Asumiendo que el docente tiene la propiedad "nombre"
-      value={selectedDocente}
-      onChange={(event, newValue) => setSelectedDocente(newValue)}
-      renderInput={(params) => (
-        <TextField {...params} label="Seleccione Docente" variant="outlined" margin="normal" fullWidth />
-      )}
-    />
-     <Autocomplete
-      options={gradoseccion}
-      getOptionLabel={(option) => option.nombre} // Asumiendo que el docente tiene la propiedad "nombre"
-      value={selectedGradoSeccion}
-      onChange={(event, newValue) => setSelectedGradoSeccion(newValue)}
-      renderInput={(params) => (
-        <TextField {...params} label="Seleccione Grado y Seccion" variant="outlined" margin="normal" fullWidth />
-      )}
-    />
-    
+        options={docentes}
+        getOptionLabel={(option) => option.nombre}
+        value={selectedDocente}
+        onChange={(event, newValue) => setSelectedDocente(newValue)}
+        renderInput={(params) => <TextField {...params} label="Seleccione Docente" variant="outlined" margin="normal" fullWidth />}
+      />
+       <Autocomplete
+        options={gradoseccion}
+        getOptionLabel={(option) => option.nombre}
+        value={selectedGradoSeccion}
+        onChange={(event, newValue) => setSelectedGradoSeccion(newValue)}
+        renderInput={(params) => <TextField {...params} label="Seleccione Grado y Sección" variant="outlined" margin="normal" fullWidth />}
+      />
+    <Typography variant="h6" component="h2" mt={3}>
+        Horarios Disponibles
+      </Typography>
+      <List>
+        {horarios.map((horario, index) => (
+          <ListItem key={index}>
+            <ListItemText primary={horario.id} />
+          </ListItem>
+        ))}
+      </List>
    
     <Box mt={2} display="flex" justifyContent="flex-end">
       <Button onClick={handleCancel} sx={{ mr: 2 }}>

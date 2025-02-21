@@ -11,6 +11,7 @@ import Typography from '@mui/material/Typography';
 
 import { appsettings } from 'src/settings/appsettings';
 
+import { _users } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Iconify } from 'src/components/iconify';
@@ -102,13 +103,13 @@ export function PaymentStatusView() {
               <PaymentStatusTableHead
                 order={table.order}
                 orderBy={table.orderBy}
-                rowCount={paymentStatus.length}
+                rowCount={_users.length}
                 numSelected={table.selected.length}
                 onSort={table.onSort}
                 onSelectAllRows={(checked) =>
                   table.onSelectAllRows(
                     checked,
-                    paymentStatus.map((paymentStatusEnter) => String(paymentStatusEnter.id))
+                    _users.map((user) => user.id)
                   )
                 }
                 headLabel={[
@@ -134,7 +135,7 @@ export function PaymentStatusView() {
 
                 <TableEmptyRows
                   height={68}
-                  emptyRows={emptyRows(table.page, table.rowsPerPage, paymentStatus.length)}
+                  emptyRows={emptyRows(table.page, table.rowsPerPage, _users.length)}
                 />
 
                 {notFound && <TableNoData searchQuery={filterName} />}
@@ -146,7 +147,7 @@ export function PaymentStatusView() {
         <TablePagination
           component="div"
           page={table.page}
-          count={paymentStatus.length}
+          count={_users.length}
           rowsPerPage={table.rowsPerPage}
           onPageChange={table.onChangePage}
           rowsPerPageOptions={[5, 10, 25]}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 
-import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { Autocomplete, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -35,14 +35,16 @@ import { TableEmptyRows } from 'src/sections/horarios/table-empty-rows';
 import { TableNoData } from 'src/sections/horarios/table-no-data';
 import { applyFilter, emptyRows, getComparator } from 'src/sections/horarios/utils';
 
+import { useParams } from 'react-router-dom';
 import type { HorariosProps } from 'src/sections/horarios/HorariosTableRow';
 import { HorariosTableToolbar } from '../HorariosTableToolbar';
 
 // ----------------------------------------------------------------------
 
 export function HorariosView() {
-const [gradoSecciones, setGradoSecciones] = useState<IGradoSeccion[]>([]);
-const [gradoSeccionId, setGradoSeccionId] = useState<number>(0);
+const [gradoSeccion, setGradoSeccion] = useState<IGradoSeccion[]>([]);
+const [selectedGradoSeccion, setSelectedGradoSeccion] = useState<IGradoSeccion | null>(null);
+const { id } = useParams<{ id: string }>(); // 'id' aquí será el id del gradoSeccion
 const [horarios, setHorarios] = useState<IHorarios[]>([]);
 const [openDialog, setOpenDialog] = useState(false);
 const [open, setOpen] = useState(false);
@@ -53,7 +55,10 @@ const [horariosToDelete, setHorarioToDelete] = useState<number | null>(null);
 const [openEdit, setOpenEdit] = useState(false);
 const [horariosToEdit, setHorarioToEdit] = useState<number | null>(null);
 
-const _horarios = async () => {
+
+
+
+const _horarios = useCallback(async () => {
   try {
     const response = await fetch(`${appsettings.apiUrl}Horario`, { method: 'GET' });
     if (response.ok) {
@@ -65,31 +70,46 @@ const _horarios = async () => {
   } catch (error) {
     console.error('Error en la petición:', error);
   }
-};
+}, []);
 
-useEffect(() => {
-  _horarios();
+const _obtenerGradoSeccion = useCallback(async () => {
+  try {
+    const response = await fetch(`${appsettings.apiUrl}GradoSeccion`, { method: 'GET' });
+    if (response.ok) {
+      const data: IGradoSeccion[] = await response.json();
+      setGradoSeccion(data);
+      console.log("Grados y secciones recibidos:", data);
+    } else {
+      console.error("Error al obtener grados y secciones:", response.status);
+    }
+  } catch (error) {
+    console.error("Error en la petición:", error);
+  }
+}, []);
+const _horariosPorGradoSeccion = useCallback(async (idGradoSeccion: string) => {
+  try {
+    const response = await fetch(`${appsettings.apiUrl}Horario/porGradoSeccion/${idGradoSeccion}`, { method: 'GET' });
+    if (response.ok) {
+      const data = await response.json();
+      setHorarios(data);
+    } else {
+      console.error('Error al obtener los Horarios por gradoSeccion:', response.status);
+    }
+  } catch (error) {
+    console.error('Error en la petición:', error);
+  }
 }, []);
 
 useEffect(() => {
-    const fetchGradoSecciones = async () => {
-      try {
-        const response = await fetch(`${appsettings.apiUrl}GradoSeccion`);
-        const data = await response.json();
-        setGradoSecciones(data);
-      } catch (error) {
-        console.error('Error al cargar los grados de sección:', error);
-      }
-    };
-    fetchGradoSecciones();
-  }, []);
-
-  const handleAsignarGradoSeccion = () => {
-    // Aquí solo asignamos el ID del GradoSección al horario, sin cambiar el GradoSección.
-    const updatedHorarios = { ...horarios, gradoSeccionId };
-    setHorarios(updatedHorarios); // Actualiza el estado de Horarios con el ID seleccionado
-    console.log(updatedHorarios); // Para verificar en la consola
-  };
+  _obtenerGradoSeccion();
+  if (id) {
+    // Si hay un id (del gradoSeccion) en la URL, filtra los horarios
+    _horariosPorGradoSeccion(id);
+  } else {
+    // Si no hay id, carga todos los horarios
+    _horarios();
+  }
+}, [id, _horarios, _horariosPorGradoSeccion, _obtenerGradoSeccion]);
 
 
 
@@ -97,23 +117,28 @@ useEffect(() => {
 const handleOpen = () => setOpen(true);
 const handleClose = () => setOpen(false);
 const handleSave = async () => {
+  const horarioData = {
+    horaInicio: _horariosHoraInicial,
+    horaFin: horariosHoraFin,
+    diaSemana: _horariosDiaSemana,
+    gradoSeccionId: selectedGradoSeccion?.id // ✅ Ahora se envía el ID correcto
+  };
+
   try {
     const response = await fetch(`${appsettings.apiUrl}Horario`, { 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        horaInicio: _horariosHoraInicial,
-        horaFin: horariosHoraFin,
-        diaSemana: _horariosDiaSemana,
-        gradoSeccionId 
-      }),
+      body: JSON.stringify(horarioData),
     });
+
     if (response.ok) {
-      _horarios();
+      const horarioCreado: IHorarios = await response.json();
+      setHorarios(prev => [...prev, horarioCreado]);
       setOpen(false);
       setHorariosHoraInicial('');
       setHorariosHoraFin('');
       setHorariosDiaSemana('');
+      setSelectedGradoSeccion(null);
       toast.success('Horario registrado exitosamente', { autoClose: 3000, position: "top-right" });
     } else {
       console.error('Error al guardar el Horario:', response.status);
@@ -124,6 +149,7 @@ const handleSave = async () => {
     toast.error('Error en la petición', { autoClose: 3000, position: "top-right" });
   }
 };
+
 const handleCancel = () => {
   setOpen(false);
   setOpenDialog(false);
@@ -133,15 +159,14 @@ const handleCancel = () => {
   toast.info('Operación cancelada', { autoClose: 3000, position: "top-right" });
 };
 
-// Eliminar Docentes
-const handleDelete = async (id: number) => {
-  setHorarioToDelete(id);
+const handleDelete = async (horarioid : number) => {
+  setHorarioToDelete(horarioid);
   setOpenDialog(true);
 };
 
 const confirmDelete = async () => {
   try {
-    const response = await fetch(`${appsettings.apiUrl}Horario/(id)?id=${horariosToDelete}`, {
+    const response = await fetch(`${appsettings.apiUrl}Horario/${horariosToDelete}`, {
       method: 'DELETE',
       headers: { 'Accept': '*/*' },
     });
@@ -169,51 +194,53 @@ const handleCloseDialog = () => {
 
 // Función para editar un Horario
 const handleEdit = (horario: IHorarios) => {
-  setHorariosHoraInicial(horario.horaInicio);
-  setHorariosHoraFin(horario.horaFin); 
-  setHorariosDiaSemana(horario.diaSemana); 
-  setGradoSeccionId(horario.gradoSeccionId); 
   setHorarioToEdit(horario.id);
+  setHorariosHoraInicial(horario.horaInicio); // Copia el valor real
+  setHorariosHoraFin(horario.horaFin); // Copia el valor real
+  setHorariosDiaSemana(horario.diaSemana);
+  setSelectedGradoSeccion(gradoSeccion.find(gs => gs.id === horario.gradoSeccion.id) || null);
   setOpenEdit(true);
 };
+const formatTimeWithSeconds = (time: string) => 
+  time.length === 5 ? `${time}:00` : time; // Si es "HH:mm", agrega ":00"
 
 // Función para guardar la edición
 const handleSaveEdit = async () => {
   if (!horariosToEdit) return;
 
+  const horarioData = {
+    horaInicio: formatTimeWithSeconds(_horariosHoraInicial), // Formatear la hora
+    horaFin: formatTimeWithSeconds(horariosHoraFin),
+    diaSemana: _horariosDiaSemana,
+    gradoSeccionId: selectedGradoSeccion?.id // Enviar el ID correcto
+  };
+
   try {
     const response = await fetch(`${appsettings.apiUrl}Horario/${horariosToEdit}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        horaInicio: _horariosHoraInicial,
-        horaFin: horariosHoraFin,
-        diaSemana: _horariosDiaSemana,
-        gradoSeccionId
-      }),
+      body: JSON.stringify(horarioData),
     });
+
     if (response.ok) {
-        _horarios();
-      setOpen(false);
+      // Actualizar la lista de horarios sin duplicaciones
+      setHorarios(prev => prev.map(h => h.id === horariosToEdit ? { ...h, ...horarioData } : h));
+      setOpenEdit(false);
       setHorariosHoraInicial('');
       setHorariosHoraFin('');
       setHorariosDiaSemana('');
-      toast.success('Horario actualizado exitosamente', {
-        autoClose: 3000,
-        position: "top-right",
-      });
+      setSelectedGradoSeccion(null);
+      toast.success('Horario actualizado exitosamente', { autoClose: 3000, position: "top-right" });
     } else {
       console.error('Error al editar el Horario:', response.status);
-      toast.error('Error al editar el Horario', {
-        autoClose: 3000,
-        position: "top-right",
-      });
+      toast.error('Error al editar el Horario', { autoClose: 3000, position: "top-right" });
     }
   } catch (error) {
     console.error('Error en la petición:', error);
     toast.error('Error en la petición', { autoClose: 3000, position: "top-right" });
   }
 };
+
 
   const table = useTable();
 
@@ -242,6 +269,23 @@ const handleSaveEdit = async () => {
           Agregar Horario
         </Button>
       </Box>
+
+ {id ? (
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Horarios para el Grado Sección {id}
+      </Typography>
+    ) : (
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Todos los Horarios
+      </Typography>
+    )}
+
+    
+     
+      
+
+
+
 
       <Card>
         <HorariosTableToolbar
@@ -272,6 +316,7 @@ const handleSaveEdit = async () => {
     <TextField
           fullWidth
           label="Hora de Inicio"
+          type = "time"
           value={_horariosHoraInicial}
           onChange={(e) => setHorariosHoraInicial(e.target.value)}
           variant="outlined"
@@ -280,6 +325,7 @@ const handleSaveEdit = async () => {
        <TextField
           fullWidth
           label="Hora de Fin"
+          type="time"
           value={horariosHoraFin}
           onChange={(e) => setHorariosHoraFin(e.target.value)}
           variant="outlined"
@@ -293,20 +339,13 @@ const handleSaveEdit = async () => {
           variant="outlined"
           margin="normal"
         />
-   <FormControl fullWidth margin="normal">
-        <InputLabel>Grado y Sección</InputLabel>
-        <Select
-          value={gradoSeccionId}
-          onChange={handleAsignarGradoSeccion} // Maneja el cambio del select
-          label="Grado y Sección"
-        >
-          {gradoSecciones.map((gradoSeccion) => (
-            <MenuItem key={gradoSeccion.id} value={gradoSeccion.id}>
-              {gradoSeccion.nombre} {/* Muestra el nombre de la sección */}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+    <Autocomplete
+           options={gradoSeccion}
+           getOptionLabel={(option) => option.nombre}
+           value={selectedGradoSeccion}
+           onChange={(event, newValue) => setSelectedGradoSeccion(newValue)}
+           renderInput={(params) => <TextField {...params} label="Seleccione Grado Seccion" variant="outlined" margin="normal" fullWidth />}
+         />
     <Box mt={2} display="flex" justifyContent="flex-end">
       <Button onClick={handleCancel} sx={{ mr: 2 }}>
         Cancelar
@@ -336,7 +375,7 @@ const handleSaveEdit = async () => {
                   { id: 'horaInicio', label: 'Hora Inicio' },
                   { id: 'horaFin', label: 'Hora Fin' },
                   { id: 'diaSemana', label: 'Día Semana' },
-                  { id: 'gradoSeccionId', label: 'Id Grado Sección' },
+                  { id: 'gradoSeccion', label: 'Grado Sección' },
                 ]}
               />
               <TableBody>
@@ -411,11 +450,12 @@ const handleSaveEdit = async () => {
           }}
         >
           <Typography variant="h6" component="h2" mb={2}>
-            Editar Docente
+            Editar Horario
           </Typography>
           <TextField
             fullWidth
             label="Hora inicio"
+            type = "time"
             value={_horariosHoraInicial}
             onChange={(e) => setHorariosHoraInicial(e.target.value)}
             variant="outlined"
@@ -424,6 +464,7 @@ const handleSaveEdit = async () => {
            <TextField
             fullWidth
             label="Hora final"
+            type = "time"
             value={horariosHoraFin}
             onChange={(e) => setHorariosHoraFin(e.target.value)}
             variant="outlined"
@@ -437,14 +478,13 @@ const handleSaveEdit = async () => {
             variant="outlined"
             margin="normal"
           />
-           <TextField
-            fullWidth
-            label="Especialidad del Docente"
-            value={gradoSeccionId}
-            onChange={(e) => setGradoSeccionId(Number(e.target.value))}
-            variant="outlined"
-            margin="normal"
-          />
+           <Autocomplete
+           options={gradoSeccion}
+           getOptionLabel={(option) => option.nombre}
+           value={selectedGradoSeccion}
+           onChange={(event, newValue) => setSelectedGradoSeccion(newValue)}
+           renderInput={(params) => <TextField {...params} label="Seleccione Grado Seccion" variant="outlined" margin="normal" fullWidth />}
+         />
           <Box mt={2} display="flex" justifyContent="flex-end">
             <Button onClick={handleCancel} sx={{ mr: 2 }}>
               Cancelar

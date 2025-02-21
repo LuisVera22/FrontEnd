@@ -5,6 +5,5 @@ export interface IHorarios {
     horaInicio: string;
     horaFin: string;
     diaSemana: string;
-    gradoSeccionId: number;
-    gradoSeccion?: IGradoSeccion;
+    gradoSeccion: IGradoSeccion;
 }

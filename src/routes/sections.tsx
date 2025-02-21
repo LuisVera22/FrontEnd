@@ -144,6 +144,10 @@ export function Router() {
             <PaymentTypesPage/>
           </ProtectedRoute>
         },
+        {
+          path: 'horarios/porGradoSeccion/:id',
+          element: <HorariosPage />, // O <HorariosView /> según cómo organices la vista
+        },
         { path: 'paymentStatus',
           element:
           <ProtectedRoute>

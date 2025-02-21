@@ -104,7 +104,7 @@ export function BankTableRow({
             },
           }}
         >
-          {row.status ? [
+          {row.status ? (
           <>
           <MenuItem onClick={() => onEdit(row)}>
             <Iconify icon="solar:pen-bold" />
@@ -121,12 +121,12 @@ export function BankTableRow({
             Desactivar
           </MenuItem>
           </>
-           ] : [
+          ) : (
             <MenuItem onClick={() => onReinstate(row.id)}sx={{color: 'success.main'}}>
               <Iconify icon="mdi:bank-transfer-in" />
               Reingresar
             </MenuItem>
-          ]}
+          )}
         </MenuList>
       </Popover>
       )}
