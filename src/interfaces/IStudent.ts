@@ -8,6 +8,8 @@ export interface IStudent {
     gender: string;
     direction: string;
     birthdate: string;
+    ImagenPath: string;
+    imageBase64: string;
     legalGuardianId: number;
     legalGuardian: ILegalGuardian | null;
 }

@@ -25,6 +25,8 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
     gender: '',
     direction: '',
     birthdate: '',
+    ImagenPath: '',
+    imageBase64: '',
     legalGuardianId: 0,
     legalGuardian: null,
   });
@@ -84,6 +86,8 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
       gender: '',
       direction: '',
       birthdate: '',
+      ImagenPath: '',
+      imageBase64: '',
       legalGuardianId: 0,
       legalGuardian: null,
     });

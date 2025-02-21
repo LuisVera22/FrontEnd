@@ -9,6 +9,8 @@ import Popover from '@mui/material/Popover';
 import TableCell from '@mui/material/TableCell';
 import TableRow from '@mui/material/TableRow';
 
+import { Avatar } from '@mui/material';
+
 import { Iconify } from 'src/components/iconify';
 import { LegalGuardianProps } from '../legalGuardian/legalGuardian-table-row';
 
@@ -22,6 +24,8 @@ export type StudentProps = {
   gender: string;
   direction: string;
   birthdate: string;
+  ImagenPath: string;
+  imageBase64: string;
   legalGuardianId: number;
   legalGuardian: LegalGuardianProps | null;
 };
@@ -55,7 +59,6 @@ export function StudentTableRow({
 
   const date = new Date(row.birthdate);
   const formattedDate = `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
-
   return (
     <>
       <TableRow hover tabIndex={-1} role="checkbox" selected={selected}>
@@ -67,6 +70,7 @@ export function StudentTableRow({
 
         <TableCell component="th" scope="row">
           <Box gap={2} display="flex" alignItems="center">
+            <Avatar alt={row.name} src={`data:image/jpeg;base64,${row.imageBase64}`} />
             {row.name}
           </Box>
         </TableCell>
