@@ -32,7 +32,7 @@ export const navData = [
   },
   {
     title: 'Matrículas',
-    path: '/registrations',
+    path: '/matricula',
     icon: icon('ic-registrations'),
     info: (
       <Label color="error" variant="inverted">

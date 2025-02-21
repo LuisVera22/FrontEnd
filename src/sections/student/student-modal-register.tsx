@@ -114,7 +114,6 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
   const handleRegister = async () => {
     const formData = new FormData();
   
-    // Agregar campos del estudiante
     formData.append("code", student.code);
     formData.append("name", student.name);
     formData.append("lastName", student.lastName);
@@ -123,19 +122,21 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
     formData.append("birthdate", student.birthdate);
     formData.append("legalGuardianId", student.legalGuardianId.toString());
   
-    // Agregar datos del apoderado si corresponde
     if (registerGuardian) {
-      formData.append("legalGuardian[name]", legalGuardian.name);
-      formData.append("legalGuardian[lastName]", legalGuardian.lastName);
+      formData.append("LegalGuardian.IdentityDocument", legalGuardian.identityDocument);
+      formData.append("LegalGuardian.Name", legalGuardian.name);
+      formData.append("LegalGuardian.LastName", legalGuardian.lastName);
+      formData.append("LegalGuardian.Gender", legalGuardian.gender);
+      formData.append("LegalGuardian.Birthdate", legalGuardian.birthdate);
+      formData.append("LegalGuardian.CellphoneNumber", legalGuardian.cellphoneNumber);
+      formData.append("LegalGuardian.Email", legalGuardian.email);
+      formData.append("LegalGuardian.Direction", legalGuardian.direction);
     }
-  
-    // Agregar la imagen si se seleccionó
     if (selectedFile) {
       formData.append("imagen", selectedFile);
     }
   
     try {
-      // Depuración: Mostrar la URL a la que se envía y las entradas del FormData
       Array.from(formData.entries()).forEach(([key, value]) => {
         console.log(`${key}:`, value);
       });
@@ -153,7 +154,6 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
         onRegister(data);
         handleClose();
       } else {
-        // Lee el cuerpo de la respuesta una sola vez
         const responseBody = await response.text();
         let errorData;
         try {
@@ -162,9 +162,9 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
           errorData = responseBody;
         }
         setErrorMessage(
-          typeof errorData === 'object' && errorData.message
-            ? errorData.message
-            : errorData || 'Error al registrar el estudiante'
+          typeof errorData === 'object'
+          ? (errorData.message ? errorData.message : JSON.stringify(errorData))
+          : errorData || 'Error al registrar el estudiante'
         );
       }
     } catch (error) {

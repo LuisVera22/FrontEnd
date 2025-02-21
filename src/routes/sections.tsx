@@ -18,6 +18,7 @@ export const BlogPage = lazy(() => import('src/pages/blog'));
 export const UserPage = lazy(() => import('src/pages/user'));
 export const BankPage = lazy(() => import('src/pages/bank'));
 export const DocentePage = lazy(() => import('src/pages/docente'));
+export const MatriculaPage = lazy(() => import('src/pages/matricula'))
 export const HorariosPage = lazy(() => import('src/pages/horarios'));
 export const GradoSeccionPage = lazy(() => import('src/pages/gradoseccion'));
 export const AsignaciónDocente = lazy(() => import('src/pages/asignaciondocente'));
@@ -106,10 +107,10 @@ export function Router() {
             </ProtectedRoute>
           ),
         },
-        { path: 'registrations',
+        { path: 'matricula',
           element: 
             <ProtectedRoute>
-              <h1>Por implementar</h1>
+              <MatriculaPage/>
             </ProtectedRoute>
         },
         { path: 'students',
