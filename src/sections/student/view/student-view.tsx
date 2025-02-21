@@ -28,6 +28,7 @@ import { TableEmptyRows } from '../table-empty-rows';
 import { TableNoData } from '../table-no-data';
 import { applyFilter, emptyRows, getComparator } from '../utils';
 
+import { AssignGuardianModal } from '../student-modal-assing';
 import { RegisterStudentModal } from '../student-modal-register';
 import type { StudentProps } from '../student-table-row';
 
@@ -42,6 +43,8 @@ export function StudentView() {
   const table = useTable();
   const [openModal, setOpenModal] = useState(false);
   const [students, setStudents] = useState<IStudent[]>([]);
+  const [openAssignGuardianModal, setOpenAssignGuardianModal] = useState(false);
+  const [studentId, setStudentId] = useState<number>(0);
   const [filterName, setFilterName] = useState('');
 
   const dataFiltered: StudentProps[] = applyFilter({
@@ -94,6 +97,17 @@ export function StudentView() {
     setStudents((prev) => [...prev, student]);
   };
 
+  // Asignar apoderado
+  const handleOpenAssignGuardianModal = (id: number) => {
+    setStudentId(id); 
+    setOpenAssignGuardianModal(true);
+  };
+
+  const handleCloseAssignGuardianModal = () => {
+    setOpenAssignGuardianModal(false);
+    _students();
+  };
+
   return (
     <DashboardContent>
       <Box display="flex" alignItems="center" mb={5}>
@@ -114,6 +128,12 @@ export function StudentView() {
         open={openModal}
         onClose={handleCloseModal}
         onRegister={handleRegisterStudent}
+      />
+
+      <AssignGuardianModal
+        open={openAssignGuardianModal} 
+        onClose={handleCloseAssignGuardianModal} 
+        studentId={studentId}
       />
 
       <Card>
@@ -164,7 +184,7 @@ export function StudentView() {
                       onSelectRow={() => table.onSelectRow(String(row.id))}
                       onEdit={() => (row)}
                       onDelete={(id) => (id)}
-                      assingLegalGuardian={(id) => console.log(id)}
+                      assingLegalGuardian={() => handleOpenAssignGuardianModal(row.id)}
                     />
                   ))}
 

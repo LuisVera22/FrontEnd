@@ -20,13 +20,25 @@ export type PaymentTypesProps = {
   status: boolean;
 };
 
-type UserTableRowProps = {
+type PaymentTypesTableRowProps = {
   row: PaymentTypesProps;
   selected: boolean;
   onSelectRow: () => void;
+  onDelete: (id: number) => void;
+  onDesactivate: (id: number) => void;
+  onReinstate: (id: number) => void;
+  onEdit: (description : PaymentTypesProps) => void;
 };
 
-export function PaymentTypesTableRow({ row, selected, onSelectRow }: UserTableRowProps) {
+export function PaymentTypesTableRow({ 
+  row,
+  selected,
+  onSelectRow,
+  onDelete,
+  onDesactivate,
+  onReinstate,
+  onEdit,
+}: PaymentTypesTableRowProps) {
   const [openPopover, setOpenPopover] = useState<HTMLButtonElement | null>(null);
 
   const handleOpenPopover = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -86,15 +98,29 @@ export function PaymentTypesTableRow({ row, selected, onSelectRow }: UserTableRo
             },
           }}
         >
-          <MenuItem onClick={handleClosePopover}>
+          {row.status ? (
+          <>
+          <MenuItem onClick={() => onEdit(row)}>
             <Iconify icon="solar:pen-bold" />
             Editar
           </MenuItem>
 
-          <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
+          <MenuItem onClick={() => onDelete(row.id)} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
             Eliminar
           </MenuItem>
+
+          <MenuItem onClick={() => onDesactivate(row.id)} sx={{ color: 'warning.main' }}>
+            <Iconify icon="eva:eye-off-fill"/>
+            Desactivar
+          </MenuItem>
+          </>
+          ) : (
+            <MenuItem onClick={() => onReinstate(row.id)}sx={{color: 'success.main'}}>
+              <Iconify icon="mdi:bank-transfer-in" />
+              Reingresar
+            </MenuItem>
+          )}
         </MenuList>
       </Popover>
     </>

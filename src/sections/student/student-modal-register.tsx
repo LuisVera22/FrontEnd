@@ -110,8 +110,8 @@ export const RegisterStudentModal: React.FC<RegisterStudentModalProps> = ({ open
     };
 
     try {
-      const response = await fetch(`${appsettings.apiUrl}Student`, {
-        method: 'POST',
+      const response = await fetch(`${appsettings.apiUrl}LegalGuardian/{findDNI}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
