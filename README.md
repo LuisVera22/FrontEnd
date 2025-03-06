@@ -1,5 +1,7 @@
 ## Sistema de Matriculas
 
+Proyecto web para la gestión de un centro educativo (en desarrollo)
+
 > Proyecto React + Vite.js.
 
 ## Inicio rápido
